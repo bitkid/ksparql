@@ -15,7 +15,7 @@ import javax.xml.stream.XMLStreamConstants
 
 data class XmlEvent(val event: Int, val data: AsyncXMLStreamReader<AsyncByteArrayFeeder>)
 
-class Client {
+class Client : AutoCloseable {
     private val client = HttpClient(Apache)
 
     suspend fun getXml(url: String, bufferSize: Int = 1024 * 100): Flow<XmlEvent> {
@@ -42,6 +42,10 @@ class Client {
                 }
             } while (currentRead >= 0)
         }
+    }
+
+    override fun close() {
+        client.close()
     }
 
 }

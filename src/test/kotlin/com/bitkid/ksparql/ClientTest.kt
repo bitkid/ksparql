@@ -1,15 +1,18 @@
 package com.bitkid.ksparql
 
 import io.ktor.application.*
+import io.ktor.client.features.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
+import strikt.api.expectThrows
 import strikt.assertions.isEqualTo
 import java.io.File
 import javax.xml.stream.XMLStreamConstants
@@ -40,12 +43,16 @@ class ClientTest {
         start(wait = false)
     }
 
+    private val client = Client()
+
     @AfterEach
-    fun shutdownServer() = server.stop(0, 0)
+    fun shutdownServer() {
+        client.close()
+        server.stop(0, 0)
+    }
 
     @Test
     fun `can get flow of xml events`() {
-        val client = Client()
         runBlocking {
             val events = client.getXml("http://localhost:8080/small-file")
             events.collectIndexed { i, v ->
@@ -90,6 +97,15 @@ class ClientTest {
                 if (i == 10) {
                     expectThat(v.event).isEqualTo(XMLStreamConstants.END_ELEMENT)
                 }
+            }
+        }
+    }
+
+    @Test
+    fun `fails if the request fails`() {
+        runBlocking {
+            expectThrows<ServerResponseException> {
+                client.getXml("http://localhost:8080/error").collect()
             }
         }
     }
