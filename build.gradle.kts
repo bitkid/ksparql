@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val kotlinVersion = "1.4.10"
 val ktorVersion = "1.4.1"
+val rdf4jVersion = "3.4.4"
 
 plugins {
     kotlin("jvm") version "1.4.10"
@@ -18,6 +19,11 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
     implementation("com.fasterxml:aalto-xml:1.2.2")
+    implementation("org.eclipse.rdf4j:rdf4j-repository-api:$rdf4jVersion")
+    implementation("org.eclipse.rdf4j:rdf4j-query:$rdf4jVersion")
+    implementation("org.eclipse.rdf4j:rdf4j-repository-sparql:$rdf4jVersion")
+    implementation("org.eclipse.rdf4j:rdf4j-queryresultio-sparqljson:$rdf4jVersion")
+    implementation("org.eclipse.rdf4j:rdf4j-queryresultio-text:$rdf4jVersion")
 
     testImplementation("io.projectreactor.tools:blockhound:1.0.4.RELEASE")
     testImplementation("io.ktor:ktor-server-netty:$ktorVersion")
