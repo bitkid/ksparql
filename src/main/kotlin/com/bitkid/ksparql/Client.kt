@@ -29,14 +29,14 @@ class Client : AutoCloseable {
                 parser.inputFeeder.feedInput(byteBuffer, 0, currentRead)
 
                 while (parser.hasNext()) {
-                    val value = parser.next()
-                    if (value == AsyncXMLStreamReader.EVENT_INCOMPLETE)
+                    val event = parser.next()
+                    if (event == AsyncXMLStreamReader.EVENT_INCOMPLETE)
                         break
                     else {
-                        if (value == XMLStreamConstants.CHARACTERS && parser.isWhiteSpace) {
+                        if (event == XMLStreamConstants.CHARACTERS && parser.isWhiteSpace) {
                             // not sure, ignore for now
                         } else {
-                            emit(XmlEvent(value, parser))
+                            emit(XmlEvent(event, parser))
                         }
                     }
                 }
