@@ -15,10 +15,10 @@ import javax.xml.stream.XMLStreamConstants
 
 data class XmlEvent(val event: Int, val data: AsyncXMLStreamReader<AsyncByteArrayFeeder>)
 
-class Client : AutoCloseable {
+class Client(private val bufferSize: Int = 1024 * 100) : AutoCloseable {
     private val client = HttpClient(Apache)
 
-    suspend fun getXml(url: String, bufferSize: Int = 1024 * 100): Flow<XmlEvent> {
+    suspend fun getXml(url: String): Flow<XmlEvent> {
         return flow {
             val channel = client.get<HttpResponse>(url).receive<ByteReadChannel>()
             val byteBuffer = ByteArray(bufferSize)
@@ -32,13 +32,10 @@ class Client : AutoCloseable {
                     val event = parser.next()
                     if (event == AsyncXMLStreamReader.EVENT_INCOMPLETE)
                         break
-                    else {
-                        if (event == XMLStreamConstants.CHARACTERS && parser.isWhiteSpace) {
-                            // not sure, ignore for now
-                        } else {
-                            emit(XmlEvent(event, parser))
-                        }
-                    }
+                    // not sure, ignore for now
+                    if (event == XMLStreamConstants.CHARACTERS && parser.isWhiteSpace)
+                        continue
+                    emit(XmlEvent(event, parser))
                 }
             } while (currentRead >= 0)
         }
