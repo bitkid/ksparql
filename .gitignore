@@ -1,0 +1,14 @@
+# from our gradle build
+build
+.gradle
+
+# idea specific
+.idea
+out/
+*.iml
+
+# app specific
+test.pdf
+
+gradle.properties
+keystore.jks
