@@ -19,6 +19,7 @@ dependencies {
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
     implementation("com.fasterxml:aalto-xml:1.2.2")
 
+    testImplementation("io.projectreactor.tools:blockhound:1.0.4.RELEASE")
     testImplementation("io.ktor:ktor-server-netty:$ktorVersion")
     testImplementation("io.strikt:strikt-core:+")
     testImplementation("org.junit.jupiter:junit-jupiter-api:+")

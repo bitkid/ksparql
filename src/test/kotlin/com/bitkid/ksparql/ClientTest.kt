@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import reactor.blockhound.BlockHound
 import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.isEqualTo
@@ -44,6 +46,11 @@ class ClientTest {
     }
 
     private val client = Client()
+
+    @BeforeEach
+    fun blockHound() {
+        BlockHound.install()
+    }
 
     @AfterEach
     fun shutdownServer() {
