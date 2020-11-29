@@ -7,8 +7,5 @@ build
 out/
 *.iml
 
-# app specific
-test.pdf
-
-gradle.properties
-keystore.jks
+# stardog docker dir
+stardog
