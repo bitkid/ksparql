@@ -20,6 +20,9 @@ fun iri(iriString: String): IRI {
     return SimpleValueFactory.getInstance().createIRI(iriString)
 }
 
+val testEntity = iri("http://test-entity")
+const val dateMillis = 1607078826127
+
 @Disabled
 class LocalStardogTest {
     private val repo = SPARQLRepository(
@@ -32,9 +35,7 @@ class LocalStardogTest {
 
     private val client = KSparqlClient("http://localhost:5820/test")
 
-    private val testEntity = iri("http://test-entity")
     private val queryString = "SELECT * WHERE { ?a ?b ?c }"
-
 
     @BeforeEach
     fun createTestData() {
@@ -43,26 +44,44 @@ class LocalStardogTest {
         repo.connection.use {
             val builder = ModelBuilder()
             builder.subject(testEntity)
-            repeat(3) {
-                builder.add(
-                    iri("http://test-rel/${UUID.randomUUID()}"),
-                    iri("http://test-ref/${UUID.randomUUID()}")
-                )
-            }
-            repeat(3) {
-                builder.add(
-                    iri("http://test-rel/${UUID.randomUUID()}"),
-                    "some string"
-                )
-            }
-            repeat(3) {
-                builder.add(
-                    iri("http://test-rel/${UUID.randomUUID()}"),
-                    234
-                )
-            }
             builder.add(
-                iri("http://test-rel/${UUID.randomUUID()}"),
+                iri("http://hasEntityRelation"),
+                iri("http://test-ref/${UUID.randomUUID()}")
+            )
+            builder.add(
+                iri("http://hasStringLiteral"),
+                "some string"
+            )
+            builder.add(
+                iri("http://hasIntLiteral"),
+                234
+            )
+            builder.add(
+                iri("http://hasDateLiteral"),
+                Date(dateMillis)
+            )
+            builder.add(
+                iri("http://hasFloatLiteral"),
+                1.26.toFloat()
+            )
+            builder.add(
+                iri("http://hasDoubleLiteral"),
+                1.23
+            )
+            builder.add(
+                iri("http://hasByteLiteral"),
+                4.toByte()
+            )
+            builder.add(
+                iri("http://hasShortLiteral"),
+                5.toShort()
+            )
+            builder.add(
+                iri("http://hasLongLiteral"),
+                6.toLong()
+            )
+            builder.add(
+                iri("http://hasBooleanLiteral"),
                 true
             )
             it.add(builder.build())
@@ -106,6 +125,7 @@ class LocalStardogTest {
         }
     }
 
+    @Disabled
     @Test
     fun `print error xml`() {
         runBlocking {
@@ -113,6 +133,7 @@ class LocalStardogTest {
         }
     }
 
+    @Disabled
     @Test
     fun `print xml`() {
         runBlocking {

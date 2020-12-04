@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.Literal
+import org.eclipse.rdf4j.model.Value
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.containsExactly
@@ -20,23 +21,52 @@ class QueryResultToFlowTest {
             val results = xmlBytes.getData().toList()
             expectThat(results).hasSize(10)
 
-            val first = results.first()
-            expectThat(first.bindingNames).containsExactly("a", "b", "c")
-            expectThat(first.bindingSet.getBinding("a").value).isEqualTo(iri("http://test-entity"))
-            expectThat(first.bindingSet.getBinding("b").value).isEqualTo(iri("http://test-rel/c74deaf9-aea1-46b7-aa8c-92f3ac69fd23"))
-            expectThat((first.bindingSet.getBinding("c").value as Literal).stringValue()).isEqualTo("some string")
-
-            val fourth = results[3]
-            expectThat(fourth.bindingNames).containsExactly("a", "b", "c")
-            expectThat(fourth.bindingSet.getBinding("a").value).isEqualTo(iri("http://test-entity"))
-            expectThat(fourth.bindingSet.getBinding("b").value).isEqualTo(iri("http://test-rel/b88c5e50-6e00-4a33-9429-8e958b82b102"))
-            expectThat(fourth.bindingSet.getBinding("c").value as IRI).isEqualTo(iri("http://test-ref/ff3d15fb-3fe5-4b09-81e1-85b0083471f1"))
-
-            val seventh = results[6]
-            expectThat(seventh.bindingNames).containsExactly("a", "b", "c")
-            expectThat(seventh.bindingSet.getBinding("a").value).isEqualTo(iri("http://test-entity"))
-            expectThat(seventh.bindingSet.getBinding("b").value).isEqualTo(iri("http://test-rel/aad1497b-440f-4aa1-8973-5476f7eb76d7"))
-            expectThat((seventh.bindingSet.getBinding("c").value as Literal).intValue()).isEqualTo(234)
+            expectLiteral(results[0], iri("http://hasStringLiteral"), { it.stringValue() }, "some string")
+            expectValue(
+                results[1],
+                iri("http://hasEntityRelation"),
+                { it as IRI },
+                iri("http://test-ref/4eda5172-8fc9-4295-aecf-d6a21d10a55a")
+            )
+            expectLiteral(results[2], iri("http://hasByteLiteral"), { it.byteValue() }, 4)
+            expectLiteral(results[3], iri("http://hasShortLiteral"), { it.shortValue() }, 5)
+            expectLiteral(results[4], iri("http://hasLongLiteral"), { it.longValue() }, 6)
+            expectLiteral(results[5], iri("http://hasIntLiteral"), { it.intValue() }, 234)
+            expectLiteral(results[6], iri("http://hasFloatLiteral"), { it.floatValue() }, 1.26F)
+            expectLiteral(results[7], iri("http://hasDoubleLiteral"), { it.doubleValue() }, 1.23)
+            expectLiteral(
+                results[8],
+                iri("http://hasDateLiteral"),
+                { it.calendarValue().toGregorianCalendar().toZonedDateTime().toInstant().toEpochMilli() },
+                dateMillis
+            )
+            expectLiteral(results[9], iri("http://hasBooleanLiteral"), { it.booleanValue() }, true)
         }
+    }
+
+    private fun <T> expectLiteral(
+        result: RdfResult,
+        predicate: IRI,
+        extract: (Literal) -> T,
+        value: T
+    ) {
+        expectThat(result.bindingSet.bindingNames).containsExactly("a", "b", "c")
+        expectThat(result.bindingNames).containsExactly("a", "b", "c")
+        expectThat(result.bindingSet.getBinding("a").value).isEqualTo(testEntity)
+        expectThat(result.bindingSet.getBinding("b").value).isEqualTo(predicate)
+        expectThat(extract(result.bindingSet.getBinding("c").value as Literal)).isEqualTo(value)
+    }
+
+    private fun <T> expectValue(
+        result: RdfResult,
+        predicate: IRI,
+        extract: (Value) -> T,
+        value: T
+    ) {
+        expectThat(result.bindingSet.bindingNames).containsExactly("a", "b", "c")
+        expectThat(result.bindingNames).containsExactly("a", "b", "c")
+        expectThat(result.bindingSet.getBinding("a").value).isEqualTo(testEntity)
+        expectThat(result.bindingSet.getBinding("b").value).isEqualTo(predicate)
+        expectThat(extract(result.bindingSet.getBinding("c").value)).isEqualTo(value)
     }
 }
