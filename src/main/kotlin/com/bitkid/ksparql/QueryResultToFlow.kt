@@ -58,12 +58,10 @@ private suspend fun writeResource(res: Resource, channel: ByteWriteChannel) {
         val uriString = res.toString()
         val quoted = uriString.contains(",")
         if (quoted) {
-            // write opening quote for entire value
             channel.writeAvailable(quoteArray)
         }
         channel.writeAvailable(uriString.toByteArray())
         if (quoted) {
-            // write closing quote for entire value
             channel.writeAvailable(quoteArray)
         }
     } else {
@@ -73,38 +71,31 @@ private suspend fun writeResource(res: Resource, channel: ByteWriteChannel) {
 }
 
 private suspend fun writeLiteral(literal: Literal, channel: ByteWriteChannel) {
-    var label = literal.label
+    val label = literal.label
     val datatype = literal.datatype
-    var quoted = false
     if (XMLDatatypeUtil.isIntegerDatatype(datatype) || XMLDatatypeUtil.isDecimalDatatype(datatype)
         || XSD.DOUBLE == datatype
     ) {
         try {
             val normalized = XMLDatatypeUtil.normalize(label, datatype)
             channel.writeAvailable(normalized.toByteArray())
-            return  // done
+            return
         } catch (e: IllegalArgumentException) {
             // not a valid numeric datatyped literal. ignore error and write as
             // (optionally quoted) string instead.
         }
     }
-    if (label.contains(",") || label.contains("\r") || label.contains("\n") || label.contains("\"")) {
-        quoted = true
-
+    val quoted = label.contains(",") || label.contains("\r") || label.contains("\n") || label.contains("\"")
+    val writeLabel = if (quoted) {
         // escape quotes inside the string
-        label = label.replace("\"".toRegex(), "\"\"")
+        label.replace("\"".toRegex(), "\"\"")
+    } else label
 
-        // add quotes around the string (escaped with a second quote for the
-        // CSV parser)
-        // label = "\"\"" + label + "\"\"";
-    }
     if (quoted) {
-        // write opening quote for entire value
         channel.writeAvailable(quoteArray)
     }
-    channel.writeAvailable(label.toByteArray())
+    channel.writeAvailable(writeLabel.toByteArray())
     if (quoted) {
-        // write closing quote for entire value
         channel.writeAvailable(quoteArray)
     }
 }
