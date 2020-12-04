@@ -1,6 +1,6 @@
 package com.bitkid.ksparql
 
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import reactor.blockhound.BlockHound
 import strikt.api.expectThat
 import strikt.api.expectThrows
+import strikt.assertions.containsExactly
 import strikt.assertions.hasSize
 import java.util.*
 
@@ -35,7 +36,7 @@ class LocalStardogTest {
 
     private val client = KSparqlClient("http://localhost:5820/test")
 
-    private val queryString = "SELECT * WHERE { ?a ?b ?c }"
+    private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
 
     @BeforeEach
     fun createTestData() {
@@ -111,8 +112,11 @@ class LocalStardogTest {
     @Test
     fun `can run query against stardog with ksparql`() {
         runBlocking {
-            val result = client.getRdfResults(queryString).toList()
-            expectThat(result).hasSize(10)
+            client.executeQuery(queryString) {
+                addBinding("b", it.createIRI("http://hasEntityRelation"))
+            }.collect {
+                expectThat(it.bindingNames).containsExactly("a", "b", "c")
+            }
         }
     }
 

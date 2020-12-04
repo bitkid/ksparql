@@ -13,6 +13,10 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
+import org.eclipse.rdf4j.model.ValueFactory
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.query.impl.MapBindingSet
+import org.eclipse.rdf4j.repository.sparql.query.QueryStringUtil
 
 class KSparqlClient(
     private val databaseUrl: String,
@@ -22,6 +26,7 @@ class KSparqlClient(
 ) : AutoCloseable {
 
     private val jackson = jacksonObjectMapper()
+    private val valueFactory = SimpleValueFactory.getInstance()
 
     private val client = HttpClient(Apache) {
         expectSuccess = false
@@ -34,7 +39,17 @@ class KSparqlClient(
         }
     }
 
-    suspend fun getRdfResults(
+    suspend fun executeQuery(
+        query: String,
+        bindings: MapBindingSet.(vf: ValueFactory) -> Unit = {}
+    ): Flow<RdfResult> {
+        val b = MapBindingSet()
+        bindings(b, valueFactory)
+        val q = QueryStringUtil.getTupleQueryString(query, b)
+        return getRdfResults(q)
+    }
+
+    internal suspend fun getRdfResults(
         query: String,
         path: String = "/query"
     ): Flow<RdfResult> {
