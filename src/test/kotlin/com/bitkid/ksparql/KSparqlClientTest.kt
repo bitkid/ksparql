@@ -7,8 +7,10 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,6 +35,15 @@ fun Application.testServer() {
         }
         get("test/error-no-json") {
             call.respond(HttpStatusCode.InternalServerError, "bla")
+        }
+        get("test/csv") {
+            val xmlBytes = withContext(Dispatchers.IO) {
+                xmlStardog.readBytes()
+            }
+            val data = xmlBytes.getData()
+            call.respondBytesWriter(ContentType.Text.CSV) {
+                data.writeCSVTo(this)
+            }
         }
     }
 }
@@ -66,6 +77,13 @@ class KSparqlClientTest {
         runBlocking {
             val result = client.getRdfResults("").toList()
             expectThat(result).hasSize(10)
+        }
+    }
+
+    @Test
+    fun `can convert to CSV`() {
+        runBlocking {
+            client.getString("http://localhost:$serverPort/test/csv")
         }
     }
 

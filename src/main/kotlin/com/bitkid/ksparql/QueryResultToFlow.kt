@@ -3,28 +3,109 @@ package com.bitkid.ksparql
 import com.fasterxml.aalto.AsyncByteArrayFeeder
 import com.fasterxml.aalto.AsyncXMLStreamReader
 import com.fasterxml.aalto.stax.InputFactoryImpl
+import io.ktor.util.cio.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import org.eclipse.rdf4j.model.Value
-import org.eclipse.rdf4j.model.ValueFactory
+import org.eclipse.rdf4j.model.*
+import org.eclipse.rdf4j.model.datatypes.XMLDatatypeUtil
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.vocabulary.XSD
 import org.eclipse.rdf4j.query.QueryResultHandler
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import javax.xml.stream.XMLStreamConstants
-import kotlin.coroutines.CoroutineContext
 
 @ExperimentalCoroutinesApi
-internal suspend fun Flow<RdfResult>.handleWith(
-    handler: QueryResultHandler,
-    coroutineDispatcher: CoroutineContext = Dispatchers.IO
+suspend fun Flow<RdfResult>.handleWith(
+    handler: QueryResultHandler
 ) {
-    flowOn(coroutineDispatcher).onCompletion { handler.endQueryResult() }.collectIndexed { index, result ->
+    onCompletion { handler.endQueryResult() }.collectIndexed { index, result ->
         if (index == 0) {
             handler.startQueryResult(result.bindingNames)
         }
         handler.handleSolution(result.bindingSet)
+    }
+}
+
+private const val lineSeparator = "\r\n"
+private val lineSeparatorArray = lineSeparator.toByteArray()
+private val valueSeparatorArray = ",".toByteArray()
+private val quoteArray = "\"".toByteArray()
+private val bNodePrefix = "_:".toByteArray()
+
+suspend fun Flow<RdfResult>.writeCSVTo(channel: ByteWriteChannel) {
+    collectIndexed { index, result ->
+        if (index == 0) {
+            val headers = result.bindingNames.joinToString(postfix = lineSeparator).toByteArray()
+            channel.writeAvailable(headers)
+        }
+        result.bindingNames.forEachIndexed { i, name ->
+            when (val value = result.bindingSet.getValue(name)) {
+                is Literal -> writeLiteral(value, channel)
+                is Resource -> writeResource(value, channel)
+                else -> throw RuntimeException("value should be either Literal or Resource")
+            }
+            if (i < result.bindingNames.size - 1) {
+                channel.writeAvailable(valueSeparatorArray)
+            }
+        }
+        channel.writeAvailable(lineSeparatorArray)
+    }
+}
+
+private suspend fun writeResource(res: Resource, channel: ByteWriteChannel) {
+    if (res is IRI) {
+        val uriString = res.toString()
+        val quoted = uriString.contains(",")
+        if (quoted) {
+            // write opening quote for entire value
+            channel.writeAvailable(quoteArray)
+        }
+        channel.writeAvailable(uriString.toByteArray())
+        if (quoted) {
+            // write closing quote for entire value
+            channel.writeAvailable(quoteArray)
+        }
+    } else {
+        channel.writeAvailable(bNodePrefix)
+        channel.writeAvailable((res as BNode).id.toByteArray())
+    }
+}
+
+private suspend fun writeLiteral(literal: Literal, channel: ByteWriteChannel) {
+    var label = literal.label
+    val datatype = literal.datatype
+    var quoted = false
+    if (XMLDatatypeUtil.isIntegerDatatype(datatype) || XMLDatatypeUtil.isDecimalDatatype(datatype)
+        || XSD.DOUBLE == datatype
+    ) {
+        try {
+            val normalized = XMLDatatypeUtil.normalize(label, datatype)
+            channel.writeAvailable(normalized.toByteArray())
+            return  // done
+        } catch (e: IllegalArgumentException) {
+            // not a valid numeric datatyped literal. ignore error and write as
+            // (optionally quoted) string instead.
+        }
+    }
+    if (label.contains(",") || label.contains("\r") || label.contains("\n") || label.contains("\"")) {
+        quoted = true
+
+        // escape quotes inside the string
+        label = label.replace("\"".toRegex(), "\"\"")
+
+        // add quotes around the string (escaped with a second quote for the
+        // CSV parser)
+        // label = "\"\"" + label + "\"\"";
+    }
+    if (quoted) {
+        // write opening quote for entire value
+        channel.writeAvailable(quoteArray)
+    }
+    channel.writeAvailable(label.toByteArray())
+    if (quoted) {
+        // write closing quote for entire value
+        channel.writeAvailable(quoteArray)
     }
 }
 

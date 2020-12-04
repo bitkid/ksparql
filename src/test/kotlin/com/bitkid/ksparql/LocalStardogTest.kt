@@ -129,7 +129,7 @@ class LocalStardogTest {
     @Test
     fun `print error xml`() {
         runBlocking {
-            println(client.getString("slelect * from"))
+            println(client.getQueryResponseAsString("slelect * from"))
         }
     }
 
@@ -137,7 +137,7 @@ class LocalStardogTest {
     @Test
     fun `print xml`() {
         runBlocking {
-            println(client.getString(queryString))
+            println(client.getQueryResponseAsString(queryString))
         }
     }
 }

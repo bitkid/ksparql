@@ -66,8 +66,14 @@ class KSparqlClient(
         header(HttpHeaders.Accept, "application/sparql-results+xml")
     }
 
-    internal suspend fun getString(query: String): String {
+    internal suspend fun getQueryResponseAsString(query: String): String {
         return client.get("$databaseUrl/query?query=$query") {
+            setHeaders()
+        }
+    }
+
+    internal suspend fun getString(url: String): String {
+        return client.get(url) {
             setHeaders()
         }
     }
