@@ -4,14 +4,29 @@ import com.fasterxml.aalto.AsyncByteArrayFeeder
 import com.fasterxml.aalto.AsyncXMLStreamReader
 import com.fasterxml.aalto.stax.InputFactoryImpl
 import io.ktor.utils.io.*
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import org.eclipse.rdf4j.model.Value
 import org.eclipse.rdf4j.model.ValueFactory
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.query.QueryResultHandler
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import javax.xml.stream.XMLStreamConstants
+import kotlin.coroutines.CoroutineContext
 
+@ExperimentalCoroutinesApi
+internal suspend fun Flow<RdfResult>.handleWith(
+    handler: QueryResultHandler,
+    coroutineDispatcher: CoroutineContext = Dispatchers.IO
+) {
+    flowOn(coroutineDispatcher).onCompletion { handler.endQueryResult() }.collectIndexed { index, result ->
+        if (index == 0) {
+            handler.startQueryResult(result.bindingNames)
+        }
+        handler.handleSolution(result.bindingSet)
+    }
+}
 
 internal fun ByteReadChannel.getData(
     valueFactory: ValueFactory = SimpleValueFactory.getInstance(),
