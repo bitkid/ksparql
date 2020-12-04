@@ -11,10 +11,12 @@ import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
 
 class Client(
+    private val databaseUrl: String,
     private val bufferSize: Int = 1024 * 100,
     userName: String = "admin",
     pw: String = "admin"
 ) : AutoCloseable {
+
     private val client = HttpClient(Apache) {
         install(Auth) {
             basic {
@@ -24,17 +26,15 @@ class Client(
         }
     }
 
-    suspend fun getRdfXml(url: String): Flow<RdfResult> {
-        val channel = client.get<HttpResponse>(url).receive<ByteReadChannel>()
+    suspend fun getRdfResults(
+        query: String,
+        path: String = "/query"
+    ): Flow<RdfResult> {
+        val channel = client.get<HttpResponse>("$databaseUrl$path?query=$query").receive<ByteReadChannel>()
         return QueryResultToFlow().getData(channel, bufferSize = bufferSize)
     }
 
     override fun close() {
         client.close()
     }
-
-    suspend fun getString(url: String): String {
-        return client.get(url)
-    }
-
 }

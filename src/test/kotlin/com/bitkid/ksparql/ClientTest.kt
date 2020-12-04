@@ -18,21 +18,13 @@ import strikt.assertions.hasSize
 import java.io.File
 
 fun Application.testServer() {
-    val xmlFile = File(ClientTest::class.java.getResource("/yournewstyle.xml").toURI())
-    val xmlFileSmall = File(ClientTest::class.java.getResource("/yournewstyle_small.xml").toURI())
     val xmlStardog = File(ClientTest::class.java.getResource("/stardog.xml").toURI())
 
     routing {
-        get("/small-file") {
-            call.respondFile(xmlFileSmall)
-        }
-        get("/stardog") {
+        get("test/query") {
             call.respondFile(xmlStardog)
         }
-        get("/file") {
-            call.respondFile(xmlFile)
-        }
-        get("/error") {
+        get("test/error") {
             throw RuntimeException()
         }
     }
@@ -47,7 +39,7 @@ class ClientTest {
         start(wait = false)
     }
 
-    private val client = Client()
+    private val client = Client("http://localhost:8080/test")
 
     @BeforeEach
     fun blockHound() {
@@ -63,7 +55,7 @@ class ClientTest {
     @Test
     fun `can read stardog xml`() {
         runBlocking {
-            val result = client.getRdfXml("http://localhost:8080/stardog").toList()
+            val result = client.getRdfResults("").toList()
             expectThat(result).hasSize(10)
         }
     }
@@ -72,7 +64,7 @@ class ClientTest {
     fun `fails if the request fails`() {
         runBlocking {
             expectThrows<ServerResponseException> {
-                client.getRdfXml("http://localhost:8080/error")
+                client.getRdfResults("", "/error")
             }
         }
     }

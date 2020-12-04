@@ -29,7 +29,7 @@ class LocalStardogTest {
         init()
     }
 
-    private val client = Client()
+    private val client = Client("http://localhost:5820/test")
 
     private val testEntity = iri("http://test-entity")
     private val queryString = "SELECT * WHERE { ?a ?b ?c }"
@@ -91,7 +91,7 @@ class LocalStardogTest {
     @Test
     fun `can run query against stardog with ksparql`() {
         runBlocking {
-            val result = client.getRdfXml("http://localhost:5820/test/query?query=$queryString").toList()
+            val result = client.getRdfResults(queryString).toList()
             expectThat(result).hasSize(10)
         }
     }

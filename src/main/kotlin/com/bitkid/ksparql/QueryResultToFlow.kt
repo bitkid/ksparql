@@ -20,37 +20,35 @@ class QueryResultToFlow {
         bufferSize: Int = 1024 * 100
     ) = flow {
         val byteBuffer = ByteArray(bufferSize)
-        val parser = InputFactoryImpl().createAsyncForByteArray()
-        val mutableParseValues = MutableParseValues(valueFactory.createLiteral(0))
-
+        val reader = InputFactoryImpl().createAsyncForByteArray()
+        val context = MutableParseContext()
         do {
             val currentRead = channel.readAvailable(byteBuffer, 0, bufferSize)
             if (currentRead > 0) {
-                parser.inputFeeder.feedInput(byteBuffer, 0, currentRead)
-                emitForAvailableXml(parser, mutableParseValues, valueFactory)
+                reader.inputFeeder.feedInput(byteBuffer, 0, currentRead)
+                emitForAvailableXml(reader, context, valueFactory)
             }
         } while (currentRead >= 0)
-        parser.inputFeeder.endOfInput()
+        reader.inputFeeder.endOfInput()
     }
 
     internal fun getData(
         xmlBytes: ByteArray,
         valueFactory: ValueFactory = SimpleValueFactory.getInstance()
     ) = flow {
-        val parser = InputFactoryImpl().createAsyncForByteArray()
+        val reader = InputFactoryImpl().createAsyncForByteArray()
 
-        parser.inputFeeder.feedInput(xmlBytes, 0, xmlBytes.size)
-        parser.inputFeeder.endOfInput()
+        reader.inputFeeder.feedInput(xmlBytes, 0, xmlBytes.size)
+        reader.inputFeeder.endOfInput()
 
-        val parseValues = MutableParseValues(valueFactory.createLiteral(0))
-
-        emitForAvailableXml(parser, parseValues, valueFactory)
+        val context = MutableParseContext()
+        emitForAvailableXml(reader, context, valueFactory)
     }
 }
 
 private suspend fun FlowCollector<RdfResult>.emitForAvailableXml(
     reader: AsyncXMLStreamReader<AsyncByteArrayFeeder>,
-    state: MutableParseValues,
+    context: MutableParseContext,
     valueFactory: ValueFactory
 ) {
     while (reader.hasNext()) {
@@ -58,22 +56,22 @@ private suspend fun FlowCollector<RdfResult>.emitForAvailableXml(
         if (event == AsyncXMLStreamReader.EVENT_INCOMPLETE)
             break
         if (event == XMLStreamConstants.CHARACTERS || event == XMLStreamConstants.CDATA)
-            state.currentRawValue = reader.text
+            context.currentRawValue = reader.text
         if (event == XMLStreamConstants.START_ELEMENT) {
-            state.currentAttributes = (0 until reader.attributeCount).associate {
+            context.currentAttributes = (0 until reader.attributeCount).associate {
                 reader.getAttributeLocalName(it) to reader.getAttributeValue(it)
             }
             when (reader.localName) {
                 SPARQLResultsXMLConstants.VAR_TAG -> {
-                    state.headerNames =
-                        state.headerNames + state.currentAttributes.getValue(SPARQLResultsXMLConstants.VAR_NAME_ATT)
+                    context.headerNames =
+                        context.headerNames + context.currentAttributes.getValue(SPARQLResultsXMLConstants.VAR_NAME_ATT)
                 }
                 SPARQLResultsXMLConstants.RESULT_TAG -> {
-                    state.currentBindingSet = MapBindingSet(state.headerNames.size)
+                    context.currentBindingSet = MapBindingSet(context.headerNames.size)
                 }
                 SPARQLResultsXMLConstants.BINDING_TAG -> {
-                    state.currentBindingName =
-                        state.currentAttributes.getValue(SPARQLResultsXMLConstants.BINDING_NAME_ATT)
+                    context.currentBindingName =
+                        context.currentAttributes.getValue(SPARQLResultsXMLConstants.BINDING_NAME_ATT)
                 }
             }
         }
@@ -81,33 +79,33 @@ private suspend fun FlowCollector<RdfResult>.emitForAvailableXml(
         if (event == XMLStreamConstants.END_ELEMENT) {
             when (reader.localName) {
                 SPARQLResultsXMLConstants.URI_TAG -> {
-                    state.currentValue = valueFactory.createIRI(state.currentRawValue)
+                    context.currentValue = valueFactory.createIRI(context.currentRawValue)
                 }
                 SPARQLResultsXMLConstants.BINDING_TAG -> {
-                    state.currentBindingSet.addBinding(
-                        state.currentBindingName,
-                        state.currentValue
+                    context.currentBindingSet.addBinding(
+                        context.currentBindingName,
+                        context.currentValue
                     )
                 }
                 SPARQLResultsXMLConstants.RESULT_TAG -> {
-                    emit(RdfResult(state.headerNames, state.currentBindingSet))
+                    emit(RdfResult(context.headerNames, context.currentBindingSet))
                 }
                 SPARQLResultsXMLConstants.LITERAL_TAG -> {
-                    val xmlLang = state.currentAttributes[SPARQLResultsXMLConstants.LITERAL_LANG_ATT]
-                    val datatype = state.currentAttributes[SPARQLResultsXMLConstants.LITERAL_DATATYPE_ATT]
+                    val xmlLang = context.currentAttributes[SPARQLResultsXMLConstants.LITERAL_LANG_ATT]
+                    val datatype = context.currentAttributes[SPARQLResultsXMLConstants.LITERAL_DATATYPE_ATT]
 
-                    state.currentValue = when {
+                    context.currentValue = when {
                         xmlLang != null -> {
-                            valueFactory.createLiteral(state.currentRawValue, xmlLang)
+                            valueFactory.createLiteral(context.currentRawValue, xmlLang)
                         }
                         datatype != null -> {
                             valueFactory.createLiteral(
-                                state.currentRawValue,
+                                context.currentRawValue,
                                 valueFactory.createIRI(datatype)
                             )
                         }
                         else -> {
-                            valueFactory.createLiteral(state.currentRawValue)
+                            valueFactory.createLiteral(context.currentRawValue)
                         }
                     }
                 }
@@ -116,13 +114,11 @@ private suspend fun FlowCollector<RdfResult>.emitForAvailableXml(
     }
 }
 
-
-private class MutableParseValues(defaultValue: Value) {
+private class MutableParseContext {
     var headerNames = listOf<String>()
     var currentBindingSet = MapBindingSet(0)
     var currentBindingName = ""
-    var currentValue: Value = defaultValue
+    var currentValue: Value = SimpleValueFactory.getInstance().createLiteral(0)
     var currentRawValue = ""
     var currentAttributes = mapOf<String, String>()
 }
-
