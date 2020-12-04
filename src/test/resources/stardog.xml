@@ -1,0 +1,120 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<sparql xmlns='http://www.w3.org/2005/sparql-results#'>
+    <head>
+        <variable name='a'/>
+        <variable name='b'/>
+        <variable name='c'/>
+    </head>
+    <results>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/c74deaf9-aea1-46b7-aa8c-92f3ac69fd23</uri>
+            </binding>
+            <binding name='c'>
+                <literal>some string</literal>
+            </binding>
+        </result>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/cffe00a3-f03a-4395-b20f-3aabc306dd6a</uri>
+            </binding>
+            <binding name='c'>
+                <literal>some string</literal>
+            </binding>
+        </result>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/b78c9d80-ce49-4ff1-966d-8448852da19d</uri>
+            </binding>
+            <binding name='c'>
+                <literal>some string</literal>
+            </binding>
+        </result>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/b88c5e50-6e00-4a33-9429-8e958b82b102</uri>
+            </binding>
+            <binding name='c'>
+                <uri>http://test-ref/ff3d15fb-3fe5-4b09-81e1-85b0083471f1</uri>
+            </binding>
+        </result>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/fb23940b-40ea-4e3e-b3ae-f2d00aa646df</uri>
+            </binding>
+            <binding name='c'>
+                <uri>http://test-ref/ac7f843f-5c3f-4d28-b90b-ecfd3d66fc4a</uri>
+            </binding>
+        </result>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/1253b799-de4e-4157-9d7a-2786f0d610db</uri>
+            </binding>
+            <binding name='c'>
+                <uri>http://test-ref/56b0f946-f1b2-4a57-aed8-4365ca0898e3</uri>
+            </binding>
+        </result>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/aad1497b-440f-4aa1-8973-5476f7eb76d7</uri>
+            </binding>
+            <binding name='c'>
+                <literal datatype='http://www.w3.org/2001/XMLSchema#integer'>234</literal>
+            </binding>
+        </result>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/87c2e8f6-29d9-43c9-a0d7-f3f6e1b4f74a</uri>
+            </binding>
+            <binding name='c'>
+                <literal datatype='http://www.w3.org/2001/XMLSchema#integer'>234</literal>
+            </binding>
+        </result>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/8aef3b28-7be6-4727-a38a-761a073cd885</uri>
+            </binding>
+            <binding name='c'>
+                <literal datatype='http://www.w3.org/2001/XMLSchema#integer'>234</literal>
+            </binding>
+        </result>
+        <result>
+            <binding name='a'>
+                <uri>http://test-entity</uri>
+            </binding>
+            <binding name='b'>
+                <uri>http://test-rel/d20903e7-6795-46d4-8df6-7b980fc932b3</uri>
+            </binding>
+            <binding name='c'>
+                <literal datatype='http://www.w3.org/2001/XMLSchema#boolean'>true</literal>
+            </binding>
+        </result>
+    </results>
+</sparql>

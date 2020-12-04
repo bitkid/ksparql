@@ -6,8 +6,7 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -15,17 +14,20 @@ import org.junit.jupiter.api.Test
 import reactor.blockhound.BlockHound
 import strikt.api.expectThat
 import strikt.api.expectThrows
-import strikt.assertions.isEqualTo
+import strikt.assertions.hasSize
 import java.io.File
-import javax.xml.stream.XMLStreamConstants
 
 fun Application.testServer() {
     val xmlFile = File(ClientTest::class.java.getResource("/yournewstyle.xml").toURI())
     val xmlFileSmall = File(ClientTest::class.java.getResource("/yournewstyle_small.xml").toURI())
+    val xmlStardog = File(ClientTest::class.java.getResource("/stardog.xml").toURI())
 
     routing {
         get("/small-file") {
             call.respondFile(xmlFileSmall)
+        }
+        get("/stardog") {
+            call.respondFile(xmlStardog)
         }
         get("/file") {
             call.respondFile(xmlFile)
@@ -59,52 +61,10 @@ class ClientTest {
     }
 
     @Test
-    fun `can get flow of xml events`() {
+    fun `can read stardog xml`() {
         runBlocking {
-            val events = client.getXml("http://localhost:8080/small-file")
-            events.collectIndexed { i, v ->
-                if (i == 0) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.START_DOCUMENT)
-                }
-                if (i == 1) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.START_ELEMENT)
-                    expectThat(v.data.localName).isEqualTo("root")
-                    expectThat(v.data.attributeCount).isEqualTo(1)
-                    expectThat(v.data.getAttributeLocalName(0)).isEqualTo("targetNamespace")
-                }
-                if (i == 2) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.START_ELEMENT)
-                    expectThat(v.data.localName).isEqualTo("date")
-                }
-                if (i == 3) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.CHARACTERS)
-                    expectThat(v.data.text).isEqualTo("2020-11-28 23:10:01")
-                }
-                if (i == 4) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.END_ELEMENT)
-                }
-                if (i == 5) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.START_ELEMENT)
-                    expectThat(v.data.localName).isEqualTo("categories")
-                }
-                if (i == 6) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.START_ELEMENT)
-                    expectThat(v.data.localName).isEqualTo("name")
-                }
-                if (i == 7) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.CDATA)
-                    expectThat(v.data.text).isEqualTo("Damskie")
-                }
-                if (i == 8) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.END_ELEMENT)
-                }
-                if (i == 9) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.END_ELEMENT)
-                }
-                if (i == 10) {
-                    expectThat(v.event).isEqualTo(XMLStreamConstants.END_ELEMENT)
-                }
-            }
+            val result = client.getRdfXml("http://localhost:8080/stardog").toList()
+            expectThat(result).hasSize(10)
         }
     }
 
@@ -112,7 +72,7 @@ class ClientTest {
     fun `fails if the request fails`() {
         runBlocking {
             expectThrows<ServerResponseException> {
-                client.getXml("http://localhost:8080/error").collect()
+                client.getRdfXml("http://localhost:8080/error")
             }
         }
     }
