@@ -1,0 +1,4 @@
+{
+  "message": "com.complexible.stardog.plan.eval.ExecutionException: Encountered \" <FUNCTION_NAME> \"slelect \"\" at line 1, column 1.\nWas expecting one of:\n    <EOF> \n    \";\" ...\n    <HINT> ...\n    \"base\" ...\n    \"prefix\" ...\n    \"load\" ...\n    \"clear\" ...\n    \"drop\" ...\n    \"add\" ...\n    \"move\" ...\n    \"copy\" ...\n    \"create\" ...\n    \"insert\" ...\n    \"delete\" ...\n    \"with\" ...\n    ",
+  "code": "QE0PE2"
+}

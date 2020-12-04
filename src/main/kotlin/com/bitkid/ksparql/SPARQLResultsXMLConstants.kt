@@ -1,7 +1,7 @@
 package com.bitkid.ksparql
 
 @Suppress("unused")
-object SPARQLResultsXMLConstants {
+internal object SPARQLResultsXMLConstants {
     const val NAMESPACE = "http://www.w3.org/2005/sparql-results#"
     const val ROOT_TAG = "sparql"
     const val HEAD_TAG = "head"

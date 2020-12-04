@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import reactor.blockhound.BlockHound
 import strikt.api.expectThat
+import strikt.api.expectThrows
 import strikt.assertions.hasSize
 import java.util.*
 
@@ -29,7 +30,7 @@ class LocalStardogTest {
         init()
     }
 
-    private val client = Client("http://localhost:5820/test")
+    private val client = KSparqlClient("http://localhost:5820/test")
 
     private val testEntity = iri("http://test-entity")
     private val queryString = "SELECT * WHERE { ?a ?b ?c }"
@@ -93,6 +94,29 @@ class LocalStardogTest {
         runBlocking {
             val result = client.getRdfResults(queryString).toList()
             expectThat(result).hasSize(10)
+        }
+    }
+
+    @Test
+    fun `can handle query error`() {
+        runBlocking {
+            expectThrows<QueryException> {
+                client.getRdfResults("slelect bla *")
+            }
+        }
+    }
+
+    @Test
+    fun `print error xml`() {
+        runBlocking {
+            println(client.getString("slelect * from"))
+        }
+    }
+
+    @Test
+    fun `print xml`() {
+        runBlocking {
+            println(client.getString(queryString))
         }
     }
 }

@@ -16,9 +16,8 @@ class QueryResultToFlowTest {
     @Test
     fun `can get flow for xml byte array`() {
         val xmlBytes = File(QueryResultToFlowTest::class.java.getResource("/stardog.xml").toURI()).readBytes()
-        val thing = QueryResultToFlow()
         runBlocking {
-            val results = thing.getData(xmlBytes).toList()
+            val results = xmlBytes.getData().toList()
             expectThat(results).hasSize(10)
 
             val first = results.first()

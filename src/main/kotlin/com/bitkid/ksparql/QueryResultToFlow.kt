@@ -12,38 +12,34 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import javax.xml.stream.XMLStreamConstants
 
-class QueryResultToFlow {
 
-    fun getData(
-        channel: ByteReadChannel,
-        valueFactory: ValueFactory = SimpleValueFactory.getInstance(),
-        bufferSize: Int = 1024 * 100
-    ) = flow {
-        val byteBuffer = ByteArray(bufferSize)
-        val reader = InputFactoryImpl().createAsyncForByteArray()
-        val context = MutableParseContext()
-        do {
-            val currentRead = channel.readAvailable(byteBuffer, 0, bufferSize)
-            if (currentRead > 0) {
-                reader.inputFeeder.feedInput(byteBuffer, 0, currentRead)
-                emitAvailableResults(reader, context, valueFactory)
-            }
-        } while (currentRead >= 0)
-        reader.inputFeeder.endOfInput()
-    }
+internal fun ByteReadChannel.getData(
+    valueFactory: ValueFactory = SimpleValueFactory.getInstance(),
+    bufferSize: Int = 1024 * 100
+) = flow {
+    val byteBuffer = ByteArray(bufferSize)
+    val reader = InputFactoryImpl().createAsyncForByteArray()
+    val context = MutableParseContext()
+    do {
+        val currentRead = readAvailable(byteBuffer, 0, bufferSize)
+        if (currentRead > 0) {
+            reader.inputFeeder.feedInput(byteBuffer, 0, currentRead)
+            emitAvailableResults(reader, context, valueFactory)
+        }
+    } while (currentRead >= 0)
+    reader.inputFeeder.endOfInput()
+}
 
-    internal fun getData(
-        xmlBytes: ByteArray,
-        valueFactory: ValueFactory = SimpleValueFactory.getInstance()
-    ) = flow {
-        val reader = InputFactoryImpl().createAsyncForByteArray()
+internal fun ByteArray.getData(
+    valueFactory: ValueFactory = SimpleValueFactory.getInstance()
+) = flow {
+    val reader = InputFactoryImpl().createAsyncForByteArray()
 
-        reader.inputFeeder.feedInput(xmlBytes, 0, xmlBytes.size)
-        reader.inputFeeder.endOfInput()
+    reader.inputFeeder.feedInput(this@getData, 0, this@getData.size)
+    reader.inputFeeder.endOfInput()
 
-        val context = MutableParseContext()
-        emitAvailableResults(reader, context, valueFactory)
-    }
+    val context = MutableParseContext()
+    emitAvailableResults(reader, context, valueFactory)
 }
 
 private suspend fun FlowCollector<RdfResult>.emitAvailableResults(
