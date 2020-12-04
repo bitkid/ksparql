@@ -27,16 +27,16 @@ fun Application.testServer() {
     val jsonError = File(KSparqlClientTest::class.java.getResource("/error.json").toURI()).readText()
 
     routing {
-        get("test/query") {
+        post("test/query") {
             call.respondFile(xmlStardog)
         }
-        get("test/error") {
+        post("test/error") {
             call.respond(HttpStatusCode.BadRequest, jsonError)
         }
-        get("test/error-no-json") {
+        post("test/error-no-json") {
             call.respond(HttpStatusCode.InternalServerError, "bla")
         }
-        get("test/csv") {
+        post("test/csv") {
             val xmlBytes = withContext(Dispatchers.IO) {
                 xmlStardog.readBytes()
             }

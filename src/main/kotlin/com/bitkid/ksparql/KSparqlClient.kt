@@ -8,6 +8,7 @@ import io.ktor.client.engine.apache.*
 import io.ktor.client.features.auth.*
 import io.ktor.client.features.auth.providers.*
 import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
@@ -37,7 +38,10 @@ class KSparqlClient(
         query: String,
         path: String = "/query"
     ): Flow<RdfResult> {
-        val response = client.get<HttpResponse>("$databaseUrl$path?query=$query") {
+        val response = client.submitForm<HttpResponse>("$databaseUrl$path",
+            formParameters = Parameters.build {
+                append("query", query)
+            }) {
             setHeaders()
         }
         if (HttpStatusCode.OK != response.call.response.status) {
