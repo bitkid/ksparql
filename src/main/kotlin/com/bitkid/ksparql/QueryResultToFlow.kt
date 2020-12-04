@@ -26,7 +26,7 @@ class QueryResultToFlow {
             val currentRead = channel.readAvailable(byteBuffer, 0, bufferSize)
             if (currentRead > 0) {
                 reader.inputFeeder.feedInput(byteBuffer, 0, currentRead)
-                emitForAvailableXml(reader, context, valueFactory)
+                emitAvailableResults(reader, context, valueFactory)
             }
         } while (currentRead >= 0)
         reader.inputFeeder.endOfInput()
@@ -42,11 +42,11 @@ class QueryResultToFlow {
         reader.inputFeeder.endOfInput()
 
         val context = MutableParseContext()
-        emitForAvailableXml(reader, context, valueFactory)
+        emitAvailableResults(reader, context, valueFactory)
     }
 }
 
-private suspend fun FlowCollector<RdfResult>.emitForAvailableXml(
+private suspend fun FlowCollector<RdfResult>.emitAvailableResults(
     reader: AsyncXMLStreamReader<AsyncByteArrayFeeder>,
     context: MutableParseContext,
     valueFactory: ValueFactory
