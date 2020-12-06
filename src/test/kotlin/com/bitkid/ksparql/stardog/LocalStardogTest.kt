@@ -5,6 +5,7 @@ import com.bitkid.ksparql.QueryException
 import com.bitkid.ksparql.test.TestUtils.dateMillis
 import com.bitkid.ksparql.test.TestUtils.iri
 import com.bitkid.ksparql.test.TestUtils.testEntity
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.eclipse.rdf4j.model.util.ModelBuilder
@@ -17,6 +18,7 @@ import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.containsExactly
 import strikt.assertions.hasSize
+import strikt.assertions.isEqualTo
 import java.util.*
 
 
@@ -45,7 +47,7 @@ class LocalStardogTest {
             )
             builder.add(
                 iri("http://hasStringLiteral"),
-                "some string"
+                "  some string "
             )
             builder.add(
                 iri("http://hasIntLiteral"),
@@ -98,9 +100,21 @@ class LocalStardogTest {
         repo.connection.use {
             val query = it.prepareTupleQuery(queryString)
             query.setBinding("a", testEntity)
-            val result = query.evaluate()
-            expectThat(result.toList()).hasSize(10)
+            val result = query.evaluate().toList()
+            expectThat(result).hasSize(10)
         }
+    }
+
+    @Test
+    fun `results are equal`() {
+        val res1 = repo.connection.use {
+            val query = it.prepareTupleQuery(queryString)
+            query.evaluate().toList()
+        }
+        val res2 = runBlocking {
+            client.executeQuery(queryString).map { it.bindingSet }.toList()
+        }
+        expectThat(res1).isEqualTo(res2)
     }
 
     @Test
