@@ -1,6 +1,7 @@
 package com.bitkid.ksparql
 
 import com.bitkid.ksparql.test.FreePorts
+import com.bitkid.ksparql.test.TestUtils
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
@@ -8,9 +9,11 @@ import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.eclipse.rdf4j.repository.sparql.SPARQLRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
@@ -29,7 +32,13 @@ fun Application.testServer() {
         post("test/query") {
             call.respondFile(xmlStardog)
         }
+        get("test/query") {
+            call.respondFile(xmlStardog)
+        }
         post("test/big-query") {
+            call.respondFile(xmlStardogBig)
+        }
+        get("test/big-query") {
             call.respondFile(xmlStardogBig)
         }
         post("test/error") {
@@ -42,9 +51,8 @@ fun Application.testServer() {
             val xmlBytes = withContext(Dispatchers.IO) {
                 xmlStardog.readBytes()
             }
-            val data = xmlBytes.getData()
             call.respondBytesWriter(ContentType.Text.CSV) {
-                data.writeCSVTo(this)
+                xmlBytes.getData().writeCSVTo(this)
             }
         }
     }
@@ -59,12 +67,20 @@ class KSparqlClientTest {
     ).apply {
         start(wait = false)
     }
+    private val repo = SPARQLRepository(
+        "http://localhost:$serverPort/test/big-query",
+        "http://localhost:$serverPort/test/update"
+    ).apply {
+        setUsernameAndPassword("admin", "admin")
+        init()
+    }
 
     private val client = KSparqlClient("http://localhost:$serverPort/test")
 
     @AfterEach
     fun shutdownServer() {
         client.close()
+        repo.shutDown()
         server.stop(0, 0)
         FreePorts.recycle(serverPort)
     }
@@ -78,11 +94,15 @@ class KSparqlClientTest {
     }
 
     @Test
-    fun `can read big stardog xml`() {
-        runBlocking {
-            val result = client.getRdfResults("", path = "/big-query").toList()
-            expectThat(result).hasSize(100000)
+    fun `rdf4j and ksparql results are equal`() {
+        val res1 = repo.connection.use {
+            val query = it.prepareTupleQuery(TestUtils.testQuery)
+            query.evaluate().toList()
         }
+        val res2 = runBlocking {
+            client.getRdfResults(TestUtils.testQuery, "/big-query").map { it.bindingSet }.toList()
+        }
+        expectThat(res1).isEqualTo(res2)
     }
 
     @Test
