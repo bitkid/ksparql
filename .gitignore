@@ -8,4 +8,4 @@ out/
 *.iml
 
 # stardog docker dir
-stardog
+/stardog/

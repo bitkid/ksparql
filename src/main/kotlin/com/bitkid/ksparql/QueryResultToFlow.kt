@@ -109,10 +109,8 @@ internal fun ByteReadChannel.getData(
     val context = MutableParseContext()
     do {
         val currentRead = readAvailable(byteBuffer, 0, bufferSize)
-        if (currentRead > 0) {
-            reader.inputFeeder.feedInput(byteBuffer, 0, currentRead)
-            emitAvailableResults(reader, context, valueFactory)
-        }
+        reader.inputFeeder.feedInput(byteBuffer, 0, currentRead)
+        emitAvailableResults(reader, context, valueFactory)
     } while (currentRead >= 0)
     reader.inputFeeder.endOfInput()
 }
@@ -139,7 +137,8 @@ private suspend fun FlowCollector<RdfResult>.emitAvailableResults(
         if (event == AsyncXMLStreamReader.EVENT_INCOMPLETE)
             break
         if (event == XMLStreamConstants.CHARACTERS || event == XMLStreamConstants.CDATA)
-            context.currentRawValue = reader.text
+            if (!reader.isWhiteSpace)
+                context.currentRawValue.append(reader.text)
         if (event == XMLStreamConstants.START_ELEMENT) {
             context.currentAttributes = (0 until reader.attributeCount).associate {
                 reader.getAttributeLocalName(it) to reader.getAttributeValue(it)
@@ -162,7 +161,7 @@ private suspend fun FlowCollector<RdfResult>.emitAvailableResults(
         if (event == XMLStreamConstants.END_ELEMENT) {
             when (reader.localName) {
                 SPARQLResultsXMLConstants.URI_TAG -> {
-                    context.currentValue = valueFactory.createIRI(context.currentRawValue)
+                    context.currentValue = valueFactory.createIRI(context.currentRawValue.toString())
                 }
                 SPARQLResultsXMLConstants.BINDING_TAG -> {
                     context.currentBindingSet.addBinding(
@@ -179,20 +178,21 @@ private suspend fun FlowCollector<RdfResult>.emitAvailableResults(
 
                     context.currentValue = when {
                         xmlLang != null -> {
-                            valueFactory.createLiteral(context.currentRawValue, xmlLang)
+                            valueFactory.createLiteral(context.currentRawValue.toString(), xmlLang)
                         }
                         datatype != null -> {
                             valueFactory.createLiteral(
-                                context.currentRawValue,
+                                context.currentRawValue.toString(),
                                 valueFactory.createIRI(datatype)
                             )
                         }
                         else -> {
-                            valueFactory.createLiteral(context.currentRawValue)
+                            valueFactory.createLiteral(context.currentRawValue.toString())
                         }
                     }
                 }
             }
+            context.currentRawValue.clear()
         }
     }
 }
@@ -202,6 +202,6 @@ private class MutableParseContext {
     var currentBindingSet = MapBindingSet(0)
     var currentBindingName = ""
     var currentValue: Value = SimpleValueFactory.getInstance().createLiteral(0)
-    var currentRawValue = ""
+    var currentRawValue = StringBuilder(1024)
     var currentAttributes = mapOf<String, String>()
 }

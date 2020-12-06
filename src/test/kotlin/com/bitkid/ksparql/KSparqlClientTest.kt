@@ -12,9 +12,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import reactor.blockhound.BlockHound
 import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.hasSize
@@ -24,11 +22,15 @@ import java.io.File
 
 fun Application.testServer() {
     val xmlStardog = File(KSparqlClientTest::class.java.getResource("/stardog.xml").toURI())
+    val xmlStardogBig = File(KSparqlClientTest::class.java.getResource("/stardog_big.xml").toURI())
     val jsonError = File(KSparqlClientTest::class.java.getResource("/error.json").toURI()).readText()
 
     routing {
         post("test/query") {
             call.respondFile(xmlStardog)
+        }
+        post("test/big-query") {
+            call.respondFile(xmlStardogBig)
         }
         post("test/error") {
             call.respond(HttpStatusCode.BadRequest, jsonError)
@@ -60,11 +62,6 @@ class KSparqlClientTest {
 
     private val client = KSparqlClient("http://localhost:$serverPort/test")
 
-    @BeforeEach
-    fun blockHound() {
-        BlockHound.install()
-    }
-
     @AfterEach
     fun shutdownServer() {
         client.close()
@@ -77,6 +74,14 @@ class KSparqlClientTest {
         runBlocking {
             val result = client.getRdfResults("").toList()
             expectThat(result).hasSize(10)
+        }
+    }
+
+    @Test
+    fun `can read big stardog xml`() {
+        runBlocking {
+            val result = client.getRdfResults("", path = "/big-query").toList()
+            expectThat(result).hasSize(100000)
         }
     }
 

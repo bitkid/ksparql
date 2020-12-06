@@ -1,6 +1,9 @@
 package com.bitkid.ksparql
 
 import com.bitkid.ksparql.test.RecordingResultHandler
+import com.bitkid.ksparql.test.TestUtils.dateMillis
+import com.bitkid.ksparql.test.TestUtils.iri
+import com.bitkid.ksparql.test.TestUtils.testEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -24,6 +27,14 @@ class QueryResultToFlowTest {
         runBlocking {
             val results = xmlBytes.getData().toList()
             expectResults(results.map { it.bindingSet })
+        }
+    }
+
+    @Test
+    fun `can get flow for big xml byte array`() {
+        val xmlBytesBig = File(QueryResultToFlowTest::class.java.getResource("/stardog_big.xml").toURI()).readBytes()
+        runBlocking {
+            expectThat(xmlBytesBig.getData().toList()).hasSize(100000)
         }
     }
 
