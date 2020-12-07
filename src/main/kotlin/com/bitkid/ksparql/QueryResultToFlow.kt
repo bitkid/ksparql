@@ -5,6 +5,7 @@ import com.fasterxml.aalto.AsyncXMLStreamReader
 import com.fasterxml.aalto.stax.InputFactoryImpl
 import io.ktor.util.cio.*
 import io.ktor.utils.io.*
+import kotlinx.collections.immutable.*
 import kotlinx.coroutines.flow.*
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
@@ -120,7 +121,7 @@ private suspend fun FlowCollector<RdfResult>.emitAvailableResults(
 }
 
 private class MutableParseContext {
-    var headerNames = listOf<String>()
+    var headerNames = persistentListOf<String>()
     var currentBindingSet = MapBindingSet(0)
     var currentBindingName = ""
     var currentValue: Value = SimpleValueFactory.getInstance().createLiteral(0)

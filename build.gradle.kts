@@ -22,6 +22,8 @@ dependencies {
     implementation("com.fasterxml:aalto-xml:1.2.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
+
     implementation("org.eclipse.rdf4j:rdf4j-repository-api:$rdf4jVersion")
     implementation("org.eclipse.rdf4j:rdf4j-query:$rdf4jVersion")
     implementation("org.eclipse.rdf4j:rdf4j-repository-sparql:$rdf4jVersion")
