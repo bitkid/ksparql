@@ -18,7 +18,7 @@ private val bNodePrefix = "_:".toByteArray()
 
 /**
  * This is mainly copied and optimized from rdf4j, but instead of writing
- * to an output stream this writes to a ByteWriteChannel.
+ * to an output stream this writes to a @ByteWriteChannel.
  * The CSV output should be the same though.
  *
  * @see org.eclipse.rdf4j.query.resultio.text.csv.SPARQLResultsCSVWriter

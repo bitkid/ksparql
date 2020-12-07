@@ -11,6 +11,10 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import javax.xml.stream.XMLStreamConstants
 
+/**
+ * convert sparql xml data read from a @ByteReadChannel to a
+ * flow of @RdfResult objects
+ */
 internal fun ByteReadChannel.getData(
     valueFactory: ValueFactory = SimpleValueFactory.getInstance(),
     bufferSize: Int = 1024 * 100
@@ -26,6 +30,9 @@ internal fun ByteReadChannel.getData(
     reader.inputFeeder.endOfInput()
 }
 
+/**
+ * convert sparql xml data to a flow of @RdfResult objects
+ */
 internal fun ByteArray.getData(
     valueFactory: ValueFactory = SimpleValueFactory.getInstance()
 ) = flow {
@@ -38,6 +45,10 @@ internal fun ByteArray.getData(
     emitAvailableResults(reader, context, valueFactory)
 }
 
+/**
+ * again, this was "inspired" by rdf4j sax parsing, adapted to the
+ * aalto async xml library.
+ */
 private suspend fun FlowCollector<RdfResult>.emitAvailableResults(
     reader: AsyncXMLStreamReader<AsyncByteArrayFeeder>,
     context: MutableParseContext,
