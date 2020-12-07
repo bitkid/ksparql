@@ -36,8 +36,8 @@ private val bNodePrefix = "_:".toByteArray()
 suspend fun Flow<RdfResult>.writeCSVTo(channel: ByteWriteChannel) {
     collectIndexed { index, result ->
         if (index == 0) {
-            val headers = result.bindingNames.joinToString(postfix = lineSeparator).toByteArray()
-            channel.writeAvailable(headers)
+            val headers = result.bindingNames.joinToString(separator = ",", postfix = lineSeparator).toByteArray()
+            channel.writeFully(headers)
         }
         result.bindingNames.forEachIndexed { i, name ->
             when (val value = result.bindingSet.getValue(name)) {
@@ -46,10 +46,10 @@ suspend fun Flow<RdfResult>.writeCSVTo(channel: ByteWriteChannel) {
                 else -> throw RuntimeException("value should be either Literal or Resource")
             }
             if (i < result.bindingNames.size - 1) {
-                channel.writeAvailable(valueSeparatorArray)
+                channel.writeFully(valueSeparatorArray)
             }
         }
-        channel.writeAvailable(lineSeparatorArray)
+        channel.writeFully(lineSeparatorArray)
     }
 }
 
@@ -58,15 +58,15 @@ private suspend fun writeResource(res: Resource, channel: ByteWriteChannel) {
         val uriString = res.toString()
         val quoted = uriString.contains(",")
         if (quoted) {
-            channel.writeAvailable(quoteArray)
+            channel.writeFully(quoteArray)
         }
-        channel.writeAvailable(uriString.toByteArray())
+        channel.writeFully(uriString.toByteArray())
         if (quoted) {
-            channel.writeAvailable(quoteArray)
+            channel.writeFully(quoteArray)
         }
     } else {
-        channel.writeAvailable(bNodePrefix)
-        channel.writeAvailable((res as BNode).id.toByteArray())
+        channel.writeFully(bNodePrefix)
+        channel.writeFully((res as BNode).id.toByteArray())
     }
 }
 
@@ -78,7 +78,7 @@ private suspend fun writeLiteral(literal: Literal, channel: ByteWriteChannel) {
     ) {
         try {
             val normalized = XMLDatatypeUtil.normalize(label, datatype)
-            channel.writeAvailable(normalized.toByteArray())
+            channel.writeFully(normalized.toByteArray())
             return
         } catch (e: IllegalArgumentException) {
             // not a valid numeric datatyped literal. ignore error and write as
@@ -92,11 +92,11 @@ private suspend fun writeLiteral(literal: Literal, channel: ByteWriteChannel) {
     } else label
 
     if (quoted) {
-        channel.writeAvailable(quoteArray)
+        channel.writeFully(quoteArray)
     }
-    channel.writeAvailable(writeLabel.toByteArray())
+    channel.writeFully(writeLabel.toByteArray())
     if (quoted) {
-        channel.writeAvailable(quoteArray)
+        channel.writeFully(quoteArray)
     }
 }
 

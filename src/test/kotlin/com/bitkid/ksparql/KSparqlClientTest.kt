@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.eclipse.rdf4j.query.resultio.text.csv.SPARQLResultsCSVWriter
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -21,6 +22,7 @@ import strikt.api.expectThrows
 import strikt.assertions.hasSize
 import strikt.assertions.isEqualTo
 import strikt.assertions.startsWith
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 fun Application.testServer() {
@@ -47,9 +49,9 @@ fun Application.testServer() {
         post("test/error-no-json") {
             call.respond(HttpStatusCode.InternalServerError, "bla")
         }
-        post("test/csv") {
+        get("test/csv") {
             val xmlBytes = withContext(Dispatchers.IO) {
-                xmlStardog.readBytes()
+                xmlStardogBig.readBytes()
             }
             call.respondBytesWriter(ContentType.Text.CSV) {
                 xmlBytes.getData().writeCSVTo(this)
@@ -68,6 +70,13 @@ class KSparqlClientTest {
         start(wait = false)
     }
     private val repo = SPARQLRepository(
+        "http://localhost:$serverPort/test/query",
+        "http://localhost:$serverPort/test/update"
+    ).apply {
+        setUsernameAndPassword("admin", "admin")
+        init()
+    }
+    private val bigRepo = SPARQLRepository(
         "http://localhost:$serverPort/test/big-query",
         "http://localhost:$serverPort/test/update"
     ).apply {
@@ -81,6 +90,7 @@ class KSparqlClientTest {
     fun shutdownServer() {
         client.close()
         repo.shutDown()
+        bigRepo.shutDown()
         server.stop(0, 0)
         FreePorts.recycle(serverPort)
     }
@@ -95,7 +105,7 @@ class KSparqlClientTest {
 
     @Test
     fun `rdf4j and ksparql results are equal`() {
-        val res1 = repo.connection.use {
+        val res1 = bigRepo.connection.use {
             val query = it.prepareTupleQuery(TestUtils.testQuery)
             query.evaluate().toList()
         }
@@ -106,10 +116,17 @@ class KSparqlClientTest {
     }
 
     @Test
-    fun `can convert to CSV`() {
-        runBlocking {
+    fun `rdf4j and ksparql csv results are equal`() {
+        val csv1 = runBlocking {
             client.getString("http://localhost:$serverPort/test/csv")
         }
+        val outputStream = ByteArrayOutputStream()
+        bigRepo.connection.use {
+            val query = it.prepareTupleQuery(TestUtils.testQuery)
+            query.evaluate(SPARQLResultsCSVWriter(outputStream))
+        }
+        val csv2 = String(outputStream.toByteArray())
+        expectThat(csv1).isEqualTo(csv2)
     }
 
     @Test
