@@ -32,7 +32,7 @@ class LocalStardogTest {
         init()
     }
 
-    private val client = KSparqlClient("http://localhost:5820/test")
+    private val client = KSparqlClient("http://localhost:5820/test/query")
 
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
 
@@ -112,7 +112,7 @@ class LocalStardogTest {
             query.evaluate().toList()
         }
         val res2 = runBlocking {
-            client.executeQuery(queryString).map { it.bindingSet }.toList()
+            client.tupleQuery(queryString).map { it.bindingSet }.toList()
         }
         expectThat(res1).isEqualTo(res2)
     }
@@ -120,7 +120,7 @@ class LocalStardogTest {
     @Test
     fun `can run query against stardog with ksparql`() {
         runBlocking {
-            val result = client.executeQuery(queryString) {
+            val result = client.tupleQuery(queryString) {
                 addBinding("b", it.createIRI("http://hasEntityRelation"))
             }.toList()
             expectThat(result).hasSize(1)

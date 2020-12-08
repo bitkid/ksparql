@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.hasSize
-import java.io.File
 import kotlin.system.measureTimeMillis
 
 
@@ -27,10 +26,10 @@ class BigDataStardogTest {
         init()
     }
 
-    private val client = KSparqlClient("http://localhost:5820/test", bufferSize = 512)
+    private val client = KSparqlClient("http://localhost:5820/test/query")
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
-    private val numberOfEntries = 100
-    private val numberOfInvocations = 100
+    private val numberOfEntries = 10
+    private val numberOfInvocations = 10
 
     @BeforeEach
     fun createTestData() {
@@ -56,7 +55,6 @@ class BigDataStardogTest {
 
     @Test
     fun `can run query against stardog with rdf4j`() {
-        println("start")
         val millis = measureAverage {
             repo.connection.use {
                 val query = it.prepareTupleQuery(queryString)
@@ -82,18 +80,10 @@ class BigDataStardogTest {
     fun `can run query against stardog with ksparql`() {
         val millis = measureAverage {
             runBlocking {
-                val res = client.executeQuery(queryString).toList()
+                val res = client.tupleQuery(queryString).toList()
                 expectThat(res).hasSize(numberOfEntries)
             }
         }
         println("ksparql $millis ms")
-    }
-
-    @Disabled
-    @Test
-    fun `print xml`() {
-        runBlocking {
-            File("stardog_big.xml").writeText(client.getQueryResponseAsString(queryString))
-        }
     }
 }

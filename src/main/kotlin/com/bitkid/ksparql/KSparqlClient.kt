@@ -19,18 +19,16 @@ import org.eclipse.rdf4j.query.impl.MapBindingSet
 import org.eclipse.rdf4j.repository.sparql.query.QueryStringUtil
 
 class KSparqlClient(
-    private val databaseUrl: String,
-    private val bufferSize: Int = 1024 * 100,
+    private val queryEndpoint: String,
     userName: String = "admin",
-    pw: String = "admin"
+    pw: String = "admin",
+    private val readXmlBufferSize: Int = 1024 * 100,
 ) : AutoCloseable {
 
     private val jackson = jacksonObjectMapper()
     private val valueFactory = SimpleValueFactory.getInstance()
-
     private val client = HttpClient(Apache) {
         expectSuccess = false
-
         install(Auth) {
             basic {
                 username = userName
@@ -39,21 +37,21 @@ class KSparqlClient(
         }
     }
 
-    suspend fun executeQuery(
+    suspend fun tupleQuery(
         query: String,
         bindings: MapBindingSet.(vf: ValueFactory) -> Unit = {}
     ): Flow<RdfResult> {
-        val b = MapBindingSet()
-        bindings(b, valueFactory)
-        val q = QueryStringUtil.getTupleQueryString(query, b)
-        return getRdfResults(q)
+        val bindingSet = MapBindingSet()
+        bindings(bindingSet, valueFactory)
+        val queryString = QueryStringUtil.getTupleQueryString(query, bindingSet)
+        return getRdfResults(queryString)
     }
 
     internal suspend fun getRdfResults(
         query: String,
-        path: String = "/query"
+        endpoint: String = queryEndpoint
     ): Flow<RdfResult> {
-        val response = client.submitForm<HttpResponse>("$databaseUrl$path",
+        val response = client.submitForm<HttpResponse>(endpoint,
             formParameters = Parameters.build {
                 append("query", query)
             }) {
@@ -63,7 +61,7 @@ class KSparqlClient(
             throw handleNotOkResponse(response)
         } else {
             return response.receive<ByteReadChannel>().getData(
-                bufferSize = bufferSize
+                bufferSize = readXmlBufferSize
             )
         }
     }
@@ -86,7 +84,7 @@ class KSparqlClient(
     }
 
     internal suspend fun getQueryResponseAsString(query: String): String {
-        return client.get("$databaseUrl/query?query=$query") {
+        return client.get("$queryEndpoint/query?query=$query") {
             setHeaders()
         }
     }
