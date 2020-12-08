@@ -17,9 +17,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
-import strikt.assertions.containsExactly
-import strikt.assertions.hasSize
-import strikt.assertions.isEqualTo
+import strikt.assertions.*
 import java.util.*
 
 
@@ -95,17 +93,6 @@ class LocalStardogTest {
         client.close()
     }
 
-
-    @Test
-    fun `can run query against stardog with rdf4j`() {
-        repo.connection.use {
-            val query = it.prepareTupleQuery(queryString)
-            query.setBinding("a", testEntity)
-            val result = query.evaluate().toList()
-            expectThat(result).hasSize(10)
-        }
-    }
-
     @Test
     fun `results are equal`() {
         val res1 = repo.connection.use {
@@ -113,7 +100,7 @@ class LocalStardogTest {
             query.evaluate().toList()
         }
         val res2 = runBlocking {
-            client.tupleQuery(queryString).map { it.bindingSet }.toList()
+            client.query(queryString).map { it.bindingSet }.toList()
         }
         expectThat(res1).isEqualTo(res2)
     }
@@ -121,7 +108,7 @@ class LocalStardogTest {
     @Test
     fun `can run query against stardog with ksparql`() {
         runBlocking {
-            val result = client.tupleQuery(queryString) {
+            val result = client.query(queryString) {
                 addBinding("b", it.createIRI("http://hasEntityRelation"))
             }.toList()
             expectThat(result).hasSize(1)
@@ -130,10 +117,24 @@ class LocalStardogTest {
     }
 
     @Test
+    fun `can run ask query against stardog with ksparql`() {
+        runBlocking {
+            val result = client.ask("""ASK {?a ?b ?c}""") {
+                addBinding("b", it.createIRI("http://hasEntityRelation"))
+            }
+            expectThat(result).isTrue()
+            val result1 = client.ask("""ASK {?a ?b ?c}""") {
+                addBinding("c", it.createLiteral("not existing"))
+            }
+            expectThat(result1).isFalse()
+        }
+    }
+
+    @Test
     fun `can handle query error`() {
         runBlocking {
             expectThrows<QueryException> {
-                client.getRdfResults("slelect bla *")
+                client.getQueryResult("slelect bla *")
             }
         }
     }

@@ -6,13 +6,13 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.File
 
-class XmlToFlowTest {
-    private val xmlBytes = File(XmlToFlowTest::class.java.getResource("/stardog.xml").toURI()).readBytes()
+class XmlToResultTest {
+    private val xmlBytes = File(XmlToResultTest::class.java.getResource("/stardog.xml").toURI()).readBytes()
 
     @Test
     fun `can get flow for xml byte array`() {
         runBlocking {
-            val results = xmlBytes.getData().toList()
+            val results = xmlBytes.getQueryResults().toList()
             expectResultsForStardogXml(results.map { it.bindingSet })
         }
     }

@@ -1,6 +1,5 @@
 package com.bitkid.ksparql
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.onCompletion
@@ -11,10 +10,10 @@ import org.eclipse.rdf4j.query.QueryResultHandler
  * SPARQLResultsJSONWriter. Be aware that the rdf4j classes all use a blocking
  * output stream.
  *
+ * https://rdf4j.org/javadoc/latest/org/eclipse/rdf4j/query/resultio/sparqljson/SPARQLResultsJSONWriter.html
+ *
  * @see QueryResultHandler
- * @see org.eclipse.rdf4j.query.resultio.sparqljson.SPARQLResultsJSONWriter
  */
-@ExperimentalCoroutinesApi
 suspend fun Flow<RdfResult>.handleWith(
     handler: QueryResultHandler
 ) {

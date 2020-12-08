@@ -1,6 +1,6 @@
 package com.bitkid.ksparql.test
 
-import com.bitkid.ksparql.getData
+import com.bitkid.ksparql.getQueryResults
 import com.bitkid.ksparql.writeCSVTo
 import io.ktor.application.*
 import io.ktor.http.*
@@ -32,6 +32,7 @@ class TestServer : AutoCloseable {
 fun Application.testServer() {
     val xmlStardog = File(TestServer::class.java.getResource("/stardog.xml").toURI())
     val xmlStardogBig = File(TestServer::class.java.getResource("/stardog_big.xml").toURI())
+    val xmlStardogBoolean = File(TestServer::class.java.getResource("/stardog_boolean.xml").toURI())
     val jsonError = File(TestServer::class.java.getResource("/error.json").toURI()).readText()
 
     routing {
@@ -50,6 +51,12 @@ fun Application.testServer() {
         post("test/error") {
             call.respond(HttpStatusCode.BadRequest, jsonError)
         }
+        get("test/boolean") {
+            call.respondFile(xmlStardogBoolean)
+        }
+        post("test/boolean") {
+            call.respondFile(xmlStardogBoolean)
+        }
         post("test/error-no-json") {
             call.respond(HttpStatusCode.InternalServerError, "bla")
         }
@@ -58,7 +65,7 @@ fun Application.testServer() {
                 xmlStardogBig.readBytes()
             }
             call.respondBytesWriter(ContentType.Text.CSV) {
-                xmlBytes.getData().writeCSVTo(this)
+                xmlBytes.getQueryResults().writeCSVTo(this)
             }
         }
     }

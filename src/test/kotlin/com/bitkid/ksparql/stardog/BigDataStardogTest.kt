@@ -81,7 +81,7 @@ class BigDataStardogTest {
     fun `can run query against stardog with ksparql`() {
         val millis = measureAverage {
             runBlocking {
-                val res = client.tupleQuery(queryString).toList()
+                val res = client.query(queryString).toList()
                 expectThat(res).hasSize(numberOfEntries)
             }
         }

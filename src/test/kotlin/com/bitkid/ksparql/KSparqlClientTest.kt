@@ -15,6 +15,7 @@ import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.hasSize
 import strikt.assertions.isEqualTo
+import strikt.assertions.isTrue
 import strikt.assertions.startsWith
 import java.io.ByteArrayOutputStream
 
@@ -48,8 +49,16 @@ class KSparqlClientTest {
     @Test
     fun `can read stardog xml`() {
         runBlocking {
-            val result = client.getRdfResults("").toList()
+            val result = client.getQueryResult("").toList()
             expectThat(result).hasSize(10)
+        }
+    }
+
+    @Test
+    fun `can read stardog boolean xml`() {
+        runBlocking {
+            val result = client.getBooleanResult("", "http://localhost:${server.port}/test/boolean")
+            expectThat(result).isTrue()
         }
     }
 
@@ -60,7 +69,7 @@ class KSparqlClientTest {
             query.evaluate().toList()
         }
         val res2 = runBlocking {
-            client.getRdfResults(TestUtils.testQuery, "http://localhost:${server.port}/test/big-query")
+            client.getQueryResult(TestUtils.testQuery, "http://localhost:${server.port}/test/big-query")
                 .map { it.bindingSet }.toList()
         }
         expectThat(res1).isEqualTo(res2)
@@ -84,7 +93,7 @@ class KSparqlClientTest {
     fun `fails if the request fails in an undefined way`() {
         runBlocking {
             val error = expectThrows<HttpException> {
-                client.getRdfResults("", "http://localhost:${server.port}/test/error-no-json")
+                client.getQueryResult("", "http://localhost:${server.port}/test/error-no-json")
             }
             error.get { message }.isEqualTo("bla")
             error.get { httpStatusCode }.isEqualTo(HttpStatusCode.InternalServerError)
@@ -95,7 +104,7 @@ class KSparqlClientTest {
     fun `fails if an error is returned`() {
         runBlocking {
             val error = expectThrows<QueryException> {
-                client.getRdfResults("", "http://localhost:${server.port}/test/error")
+                client.getQueryResult("", "http://localhost:${server.port}/test/error")
             }
             error.get { errorResponse.code }.isEqualTo("QE0PE2")
             error.get { errorResponse.message }.startsWith("com.complexible.stardog")

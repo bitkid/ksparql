@@ -38,20 +38,53 @@ class KSparqlClient(
         }
     }
 
-    suspend fun tupleQuery(
+    suspend fun query(
         query: String,
         bindings: MapBindingSet.(vf: ValueFactory) -> Unit = {}
     ): Flow<RdfResult> {
-        val bindingSet = MapBindingSet()
-        bindings(bindingSet, valueFactory)
+        val bindingSet = createBindingSet(bindings)
         val queryString = QueryStringUtil.getTupleQueryString(query, bindingSet)
-        return getRdfResults(queryString)
+        return getQueryResult(queryString)
     }
 
-    internal suspend fun getRdfResults(
+    suspend fun ask(
+        query: String,
+        bindings: MapBindingSet.(vf: ValueFactory) -> Unit = {}
+    ): Boolean {
+        val bindingSet = createBindingSet(bindings)
+        val queryString = QueryStringUtil.getBooleanQueryString(query, bindingSet)
+        return getBooleanResult(queryString)
+    }
+
+    internal suspend fun getBooleanResult(
         query: String,
         endpoint: String = queryEndpoint
-    ): Flow<RdfResult> {
+    ) = getSparqlResult(query, endpoint) {
+        it.receive<ByteReadChannel>().getBooleanResult(
+            bufferSize = readXmlBufferSize
+        )
+    }
+
+    internal suspend fun getQueryResult(
+        query: String,
+        endpoint: String = queryEndpoint
+    ): Flow<RdfResult> = getSparqlResult(query, endpoint) {
+        it.receive<ByteReadChannel>().getQueryResults(
+            bufferSize = readXmlBufferSize
+        )
+    }
+
+    private fun createBindingSet(bindings: MapBindingSet.(vf: ValueFactory) -> Unit): MapBindingSet {
+        val bindingSet = MapBindingSet()
+        bindings(bindingSet, valueFactory)
+        return bindingSet
+    }
+
+    private suspend fun <T> getSparqlResult(
+        query: String,
+        endpoint: String,
+        mapper: suspend (HttpResponse) -> T
+    ): T {
         val response = client.submitForm<HttpResponse>(endpoint,
             formParameters = Parameters.build {
                 append("query", query)
@@ -61,9 +94,7 @@ class KSparqlClient(
         if (HttpStatusCode.OK != response.call.response.status) {
             throw handleNotOkResponse(response)
         } else {
-            return response.receive<ByteReadChannel>().getData(
-                bufferSize = readXmlBufferSize
-            )
+            return mapper(response)
         }
     }
 
@@ -85,7 +116,7 @@ class KSparqlClient(
     }
 
     internal suspend fun getQueryResponseAsString(query: String): String {
-        return client.get("$queryEndpoint/query?query=$query") {
+        return client.get("$queryEndpoint?query=$query") {
             setHeaders()
         }
     }

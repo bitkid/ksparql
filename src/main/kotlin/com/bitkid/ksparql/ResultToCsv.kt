@@ -21,7 +21,8 @@ private val bNodePrefix = "_:".toByteArray()
  * to an output stream this writes to a @ByteWriteChannel.
  * The CSV output should be the same though.
  *
- * @see org.eclipse.rdf4j.query.resultio.text.csv.SPARQLResultsCSVWriter
+ * https://rdf4j.org/javadoc/latest/org/eclipse/rdf4j/query/resultio/text/csv/SPARQLResultsCSVWriter.html
+ *
  * @see ByteWriteChannel
  */
 suspend fun Flow<RdfResult>.writeCSVTo(channel: ByteWriteChannel) {
@@ -72,7 +73,7 @@ private suspend fun writeLiteral(literal: Literal, channel: ByteWriteChannel) {
             channel.writeFully(normalized.toByteArray())
             return
         } catch (e: IllegalArgumentException) {
-            // not a valid numeric datatyped literal. ignore error and write as
+            // not a valid numeric datatype literal. ignore error and write as
             // (optionally quoted) string instead.
         }
     }

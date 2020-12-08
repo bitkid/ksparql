@@ -16,7 +16,7 @@ import javax.xml.stream.XMLStreamConstants
  * convert sparql xml data read from a @ByteReadChannel to a
  * flow of @RdfResult objects
  */
-internal fun ByteReadChannel.getData(
+internal fun ByteReadChannel.getQueryResults(
     valueFactory: ValueFactory = SimpleValueFactory.getInstance(),
     bufferSize: Int = 1024 * 100
 ) = flow {
@@ -31,15 +31,44 @@ internal fun ByteReadChannel.getData(
     reader.inputFeeder.endOfInput()
 }
 
+internal suspend fun ByteReadChannel.getBooleanResult(
+    bufferSize: Int = 1024 * 100
+): Boolean {
+    val byteBuffer = ByteArray(bufferSize)
+    val reader = InputFactoryImpl().createAsyncForByteArray()
+    val stringBuilder = StringBuilder()
+    do {
+        val currentRead = readAvailable(byteBuffer, 0, bufferSize)
+        reader.inputFeeder.feedInput(byteBuffer, 0, currentRead)
+        while (reader.hasNext()) {
+            val event = reader.next()
+            if (event == AsyncXMLStreamReader.EVENT_INCOMPLETE)
+                break
+            if (event == XMLStreamConstants.CHARACTERS || event == XMLStreamConstants.CDATA)
+                if (!reader.isWhiteSpace)
+                    stringBuilder.append(reader.text)
+            if (event == XMLStreamConstants.END_ELEMENT) {
+                if (reader.localName == SPARQLResultsXMLConstants.BOOLEAN_TAG) {
+                    reader.inputFeeder.endOfInput()
+                    return stringBuilder.toString().toBoolean()
+                }
+                stringBuilder.clear()
+            }
+        }
+    } while (currentRead >= 0)
+    throw RuntimeException("Boolean response not found in XML")
+}
+
+
 /**
  * convert sparql xml data to a flow of @RdfResult objects
  */
-internal fun ByteArray.getData(
+internal fun ByteArray.getQueryResults(
     valueFactory: ValueFactory = SimpleValueFactory.getInstance()
 ) = flow {
     val reader = InputFactoryImpl().createAsyncForByteArray()
 
-    reader.inputFeeder.feedInput(this@getData, 0, this@getData.size)
+    reader.inputFeeder.feedInput(this@getQueryResults, 0, this@getQueryResults.size)
     reader.inputFeeder.endOfInput()
 
     val context = MutableParseContext()

@@ -12,6 +12,7 @@ plugins {
 
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = "14"
+    kotlinOptions.freeCompilerArgs += listOf("-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi")
 }
 
 dependencies {

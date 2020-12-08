@@ -1,7 +1,6 @@
 package com.bitkid.ksparql
 
 import com.bitkid.ksparql.test.TestUtils.expectResultsForStardogXml
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.eclipse.rdf4j.query.BindingSet
 import org.eclipse.rdf4j.query.QueryResultHandler
@@ -13,14 +12,13 @@ import java.io.File
 
 class ResultHandlerAdapterTest {
 
-    private val xmlBytes = File(XmlToFlowTest::class.java.getResource("/stardog.xml").toURI()).readBytes()
+    private val xmlBytes = File(XmlToResultTest::class.java.getResource("/stardog.xml").toURI()).readBytes()
 
-    @ExperimentalCoroutinesApi
     @Test
     fun `can write to handler`() {
         runBlocking {
             val handler = RecordingResultHandler()
-            xmlBytes.getData().handleWith(handler)
+            xmlBytes.getQueryResults().handleWith(handler)
             expectThat(handler.bindingNames).containsExactly("a", "b", "c")
             expectThat(handler.ended).isTrue()
             expectResultsForStardogXml(handler.bindingSets.toList())
