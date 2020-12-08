@@ -2,6 +2,7 @@ package com.bitkid.ksparql
 
 import com.bitkid.ksparql.test.TestServer
 import com.bitkid.ksparql.test.TestUtils
+import io.ktor.client.engine.apache.*
 import io.ktor.http.*
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
@@ -34,7 +35,7 @@ class KSparqlClientTest {
         init()
     }
 
-    private val client = KSparqlClient("http://localhost:${server.port}/test/query")
+    private val client = KSparqlClient("http://localhost:${server.port}/test/query", Apache)
 
     @AfterEach
     fun shutdownServer() {

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.apache.*
+import io.ktor.client.engine.*
 import io.ktor.client.features.auth.*
 import io.ktor.client.features.auth.providers.*
 import io.ktor.client.request.*
@@ -20,14 +20,15 @@ import org.eclipse.rdf4j.repository.sparql.query.QueryStringUtil
 
 class KSparqlClient(
     private val queryEndpoint: String,
+    engine: HttpClientEngineFactory<*>,
     userName: String = "admin",
     pw: String = "admin",
-    private val readXmlBufferSize: Int = 1024 * 100,
+    private val readXmlBufferSize: Int = 1024 * 100
 ) : AutoCloseable {
 
     private val jackson = jacksonObjectMapper()
     private val valueFactory = SimpleValueFactory.getInstance()
-    private val client = HttpClient(Apache) {
+    private val client = HttpClient(engine) {
         expectSuccess = false
         install(Auth) {
             basic {

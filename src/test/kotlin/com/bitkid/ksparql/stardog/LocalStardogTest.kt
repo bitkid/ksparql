@@ -5,6 +5,7 @@ import com.bitkid.ksparql.QueryException
 import com.bitkid.ksparql.test.TestUtils.dateMillis
 import com.bitkid.ksparql.test.TestUtils.iri
 import com.bitkid.ksparql.test.TestUtils.testEntity
+import io.ktor.client.engine.apache.*
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -32,7 +33,7 @@ class LocalStardogTest {
         init()
     }
 
-    private val client = KSparqlClient("http://localhost:5820/test/query")
+    private val client = KSparqlClient("http://localhost:5820/test/query", Apache)
 
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
 

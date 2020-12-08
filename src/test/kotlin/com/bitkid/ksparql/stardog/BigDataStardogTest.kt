@@ -3,6 +3,7 @@ package com.bitkid.ksparql.stardog
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.test.TestUtils.iri
 import com.bitkid.ksparql.test.TestUtils.testEntity
+import io.ktor.client.engine.apache.*
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.eclipse.rdf4j.model.util.ModelBuilder
@@ -26,7 +27,7 @@ class BigDataStardogTest {
         init()
     }
 
-    private val client = KSparqlClient("http://localhost:5820/test/query")
+    private val client = KSparqlClient("http://localhost:5820/test/query", Apache)
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
     private val numberOfEntries = 10
     private val numberOfInvocations = 10
