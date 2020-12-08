@@ -15,6 +15,7 @@ import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
 import org.eclipse.rdf4j.model.ValueFactory
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.query.BindingSet
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import org.eclipse.rdf4j.repository.sparql.query.QueryStringUtil
 
@@ -133,3 +134,4 @@ class KSparqlClient(
 
 }
 
+data class RdfResult(val bindingNames: List<String>, val bindingSet: BindingSet)
