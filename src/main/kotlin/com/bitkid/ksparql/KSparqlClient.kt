@@ -4,7 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.*
+import io.ktor.client.engine.apache.*
 import io.ktor.client.features.auth.*
 import io.ktor.client.features.auth.providers.*
 import io.ktor.client.request.*
@@ -21,10 +21,9 @@ import org.eclipse.rdf4j.repository.sparql.query.QueryStringUtil
 
 class KSparqlClient(
     private val queryEndpoint: String,
-    engine: HttpClientEngineFactory<*>,
-    userName: String = "admin",
-    pw: String = "admin",
-    private val readXmlBufferSize: Int = 1024 * 100
+    user: String,
+    pass: String,
+    private val readXmlBufferSize: Int = 1024 * 1024
 ) : AutoCloseable {
     companion object {
         const val XML_ACCEPT_HEADER = "application/sparql-results+xml"
@@ -32,12 +31,12 @@ class KSparqlClient(
 
     private val jackson = jacksonObjectMapper()
     private val valueFactory = SimpleValueFactory.getInstance()
-    private val client = HttpClient(engine) {
+    private val client = HttpClient(Apache) {
         expectSuccess = false
         install(Auth) {
             basic {
-                username = userName
-                password = pw
+                username = user
+                password = pass
             }
         }
     }
@@ -93,7 +92,7 @@ class KSparqlClient(
             formParameters = Parameters.build {
                 append("query", query)
             }) {
-            setHeaders()
+            header(HttpHeaders.Accept, XML_ACCEPT_HEADER)
         }
         if (HttpStatusCode.OK != response.call.response.status) {
             throw handleNotOkResponse(response)
@@ -113,10 +112,6 @@ class KSparqlClient(
             return HttpException(content, status)
         }
         return QueryException(error, status)
-    }
-
-    private fun HttpRequestBuilder.setHeaders() {
-        header(HttpHeaders.Accept, XML_ACCEPT_HEADER)
     }
 
     override fun close() {

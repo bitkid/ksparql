@@ -3,7 +3,6 @@ package com.bitkid.ksparql.stardog
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.test.TestUtils.iri
 import com.bitkid.ksparql.test.TestUtils.testEntity
-import io.ktor.client.engine.apache.*
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.eclipse.rdf4j.model.util.ModelBuilder
@@ -27,7 +26,7 @@ class BigDataStardogTest {
         init()
     }
 
-    private val client = KSparqlClient("http://localhost:5820/test/query", Apache)
+    private val client = KSparqlClient("http://localhost:5820/test/query", "admin", "admin")
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
     private val numberOfEntries = 10
     private val numberOfInvocations = 10
@@ -66,17 +65,6 @@ class BigDataStardogTest {
         println("rdf4j $millis ms")
     }
 
-    private fun measureAverage(repeat: Int = numberOfInvocations, block: () -> Unit): Long {
-        val times = mutableListOf<Long>()
-        repeat(repeat) {
-            val millis = measureTimeMillis {
-                block()
-            }
-            times.add(millis)
-        }
-        return times.average().toLong()
-    }
-
     @Test
     fun `can run query against stardog with ksparql`() {
         val millis = measureAverage {
@@ -86,5 +74,16 @@ class BigDataStardogTest {
             }
         }
         println("ksparql $millis ms")
+    }
+
+    private fun measureAverage(repeat: Int = numberOfInvocations, block: () -> Unit): Long {
+        val times = mutableListOf<Long>()
+        repeat(repeat) {
+            val millis = measureTimeMillis {
+                block()
+            }
+            times.add(millis)
+        }
+        return times.average().toLong()
     }
 }

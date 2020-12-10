@@ -1,5 +1,6 @@
 package com.bitkid.ksparql.test
 
+import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.getQueryResults
 import com.bitkid.ksparql.writeCSVTo
 import io.ktor.application.*
@@ -21,6 +22,10 @@ class TestServer : AutoCloseable {
         module = Application::testServer
     ).apply {
         start(wait = false)
+    }
+
+    fun testClient(): KSparqlClient {
+        return KSparqlClient("http://localhost:${port}/test/query", "admin", "admin")
     }
 
     override fun close() {

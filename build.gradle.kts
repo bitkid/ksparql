@@ -16,7 +16,7 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-apache:$ktorVersion")
     implementation("io.ktor:ktor-client-auth-jvm:$ktorVersion")
     implementation("com.fasterxml:aalto-xml:1.2.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0")
@@ -27,7 +27,6 @@ dependencies {
 
     testImplementation("org.eclipse.rdf4j:rdf4j-http-client:$rdf4jVersion")
     testImplementation("org.eclipse.rdf4j:rdf4j-queryresultio-text:$rdf4jVersion")
-    testImplementation("io.ktor:ktor-client-apache:$ktorVersion")
     testImplementation("ch.qos.logback:logback-classic:1.2.3")
     testImplementation("io.projectreactor.tools:blockhound:1.0.4.RELEASE")
     testImplementation("io.strikt:strikt-core:+")
