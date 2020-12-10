@@ -33,7 +33,7 @@ runBlocking {
         "admin"
     )
 
-    client.query("select ?a ?b ?c") { valueFactory ->
+    client.query("SELECT ?a ?b ?c WHERE { ?a ?b ?c }") { valueFactory ->
         addBinding("a", valueFactory.createIRI("http://bob"))
     }.collect { rdfResult ->
         // do something with the rdfResult
