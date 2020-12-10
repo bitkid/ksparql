@@ -1,3 +1,4 @@
+import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val kotlinVersion = "1.4.21"
@@ -5,12 +6,18 @@ val ktorVersion = "1.4.3"
 val rdf4jVersion = "3.5.0"
 
 group = "com.bitkid"
-version = "0.0.1"
+version = "0.0.4"
 
 plugins {
     kotlin("jvm") version "1.4.21"
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    `maven-publish`
+    id("com.jfrog.bintray") version "1.8.5"
     id("com.github.ben-manes.versions") version "0.36.0"
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
 }
 
 tasks.withType<KotlinCompile>().configureEach {
@@ -42,9 +49,34 @@ dependencies {
     }
 }
 
-repositories {
-    mavenCentral()
-    jcenter()
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            groupId = project.group as String
+            artifactId = project.name
+            version = project.version as String
+        }
+    }
+}
+
+bintray {
+    user = "bitkid"
+    key = System.getenv("BINTRAY_API_KEY")
+    publish = true
+    setPublications("mavenJava")
+    pkg(
+        delegateClosureOf<BintrayExtension.PackageConfig> {
+            repo = "maven"
+            name = "ksparql"
+            setLicenses("MIT")
+            version(
+                delegateClosureOf<BintrayExtension.VersionConfig> {
+                    name = project.version as String
+                }
+            )
+        }
+    )
 }
 
 tasks.withType<Test>().configureEach {
