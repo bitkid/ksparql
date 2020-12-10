@@ -10,9 +10,9 @@ aalto-xml async xml parser fed by a ktor ByteReadChannel for processing the spar
 
 ## limitations
 
-this library has only been tested with stardog but in theory it should handle all databases with query endpoints that
-return sparql xml (https://www.w3.org/TR/rdf-sparql-XMLres/). be aware, that not the full XML tag set is supported yet.
-update queries are totally untested, so for now, you could call it a read-only client.
+this library has only been tested with stardog (7.4.4) but in theory it should handle all databases with query endpoints
+that return sparql xml (https://www.w3.org/TR/rdf-sparql-XMLres/). be aware, that not the full XML tag set is supported
+yet. update queries are totally untested, so for now, you could call it a read-only client.
 
 ## usage
 
@@ -47,4 +47,18 @@ runBlocking {
         addBinding("c", valueFactory.createIRI("http://alice"))
     }
 }
+```
+
+## contribute
+
+i totally accept PRs if i like them. run the tests with
+
+```shell
+./gradlew test
+```
+
+the stardog tests are set to @Disabled, if you want to run them install docker and run
+
+```shell
+./start_stardog.sh
 ```
