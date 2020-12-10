@@ -4,6 +4,9 @@ val kotlinVersion = "1.4.21"
 val ktorVersion = "1.4.3"
 val rdf4jVersion = "3.5.0"
 
+group = "com.bitkid"
+version = "0.0.1"
+
 plugins {
     kotlin("jvm") version "1.4.21"
     id("com.github.johnrengelman.shadow") version "6.1.0"
