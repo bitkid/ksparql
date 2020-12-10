@@ -2,9 +2,20 @@
 
 ksparql is a non-blocking sparql xml http client
 
+## motivation
+
+i have been writing code which uses rdf4j for talking to a stardog database. while rdf4j is a great library with tons of
+features it does not integrate well with the ktor/coroutines world. this library aims at bridging that gap.
+
+## limitations
+
+this library has only been tested with stardog but in theory it should handle all databases with query endpoints that
+return sparql xml (https://www.w3.org/TR/rdf-sparql-XMLres/). be aware, that not the full XML tag set is supported yet.
+update queries are totally untested, so for now, you could call it a read-only client.
+
 ## usage
 
-Assuming you have following triples in your database
+assuming you have following triples in your database
 
 ```
 <http://bob> <http://likes> <http://alice>
