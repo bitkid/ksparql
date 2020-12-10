@@ -62,3 +62,7 @@ the stardog tests are set to @Disabled, if you want to run them in your IDE inst
 ```shell
 ./start_stardog.sh
 ```
+
+## license
+
+[MIT](https://choosealicense.com/licenses/mit/)
