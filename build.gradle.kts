@@ -25,6 +25,11 @@ tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.freeCompilerArgs += listOf("-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi")
 }
 
+val sourcesJar by tasks.creating(Jar::class) {
+    archiveClassifier.set("sources")
+    from(sourceSets.getByName("main").allSource)
+}
+
 dependencies {
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
     implementation("io.ktor:ktor-client-auth-jvm:$ktorVersion")
@@ -53,6 +58,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
+            artifact(sourcesJar)
             groupId = project.group as String
             artifactId = project.name
             version = project.version as String
@@ -73,6 +79,8 @@ bintray {
             version(
                 delegateClosureOf<BintrayExtension.VersionConfig> {
                     name = project.version as String
+                    description = "ksparql is a non-blocking sparql xml http client"
+                    githubRepo = "bitkid/ksparql"
                 }
             )
         }
