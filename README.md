@@ -5,7 +5,8 @@ ksparql is a non-blocking sparql xml http client
 ## motivation
 
 i have been writing code which uses rdf4j for talking to a stardog database. while rdf4j is a great library with tons of
-features it does not integrate well with the ktor/coroutines world. this library aims at bridging that gap.
+features it does not integrate well with the ktor/coroutines world. this library aims at bridging that gap by using the
+aalto-xml async xml parser fed by a ktor ByteReadChannel for processing the sparql result xml.
 
 ## limitations
 
