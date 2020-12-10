@@ -139,11 +139,15 @@ class LocalStardogTest {
         }
     }
 
-    @Disabled
     @Test
     fun `print error xml`() {
         runBlocking {
-            println(client.getQueryResponseAsString("slelect * from"))
+            println(
+                DataFetcher().getQueryResponseAsString(
+                    "http://localhost:5820/test/query",
+                    "slelect * from"
+                )
+            )
         }
     }
 
@@ -151,7 +155,7 @@ class LocalStardogTest {
     @Test
     fun `print xml`() {
         runBlocking {
-            println(client.getQueryResponseAsString(queryString))
+            println(DataFetcher().getQueryResponseAsString("http://localhost:5820/test/query", queryString))
         }
     }
 }

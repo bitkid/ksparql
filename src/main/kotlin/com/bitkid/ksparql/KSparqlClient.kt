@@ -26,6 +26,9 @@ class KSparqlClient(
     pw: String = "admin",
     private val readXmlBufferSize: Int = 1024 * 100
 ) : AutoCloseable {
+    companion object {
+        const val XML_ACCEPT_HEADER = "application/sparql-results+xml"
+    }
 
     private val jackson = jacksonObjectMapper()
     private val valueFactory = SimpleValueFactory.getInstance()
@@ -113,19 +116,7 @@ class KSparqlClient(
     }
 
     private fun HttpRequestBuilder.setHeaders() {
-        header(HttpHeaders.Accept, "application/sparql-results+xml")
-    }
-
-    internal suspend fun getQueryResponseAsString(query: String): String {
-        return client.get("$queryEndpoint?query=$query") {
-            setHeaders()
-        }
-    }
-
-    internal suspend fun getString(url: String): String {
-        return client.get(url) {
-            setHeaders()
-        }
+        header(HttpHeaders.Accept, XML_ACCEPT_HEADER)
     }
 
     override fun close() {

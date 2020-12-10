@@ -1,5 +1,6 @@
 package com.bitkid.ksparql
 
+import com.bitkid.ksparql.stardog.DataFetcher
 import com.bitkid.ksparql.test.TestServer
 import com.bitkid.ksparql.test.TestUtils
 import io.ktor.client.engine.apache.*
@@ -78,7 +79,7 @@ class KSparqlClientTest {
     @Test
     fun `rdf4j and ksparql csv results are equal`() {
         val csv1 = runBlocking {
-            client.getString("http://localhost:${server.port}/test/csv")
+            DataFetcher().getString("http://localhost:${server.port}/test/csv")
         }
         val outputStream = ByteArrayOutputStream()
         bigRepo.connection.use {
