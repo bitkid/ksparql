@@ -24,7 +24,7 @@ assuming you have following triples in your database
 <http://trudy> <http://likes> <http://bob>
 ```
 
-this is how the client can be used execute queries
+this is how the client can be used to execute queries
 
 ```kotlin
 runBlocking {
