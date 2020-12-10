@@ -57,7 +57,7 @@ i totally accept PRs if i like them. run the tests with
 ./gradlew test
 ```
 
-the stardog tests are set to @Disabled, if you want to run them install docker and run
+the stardog tests are set to @Disabled, if you want to run them in your IDE install docker and run
 
 ```shell
 ./start_stardog.sh
