@@ -16,6 +16,21 @@ yet. update queries are totally untested, so for now, you could call it a read-o
 
 ## usage
 
+get the package with gradle / maven
+
+```kotlin
+implementation("com.bitkid:ksparql:0.0.1")
+```
+
+```xml
+<dependency>
+    <groupId>com.bitkid</groupId>
+    <artifactId>ksparql</artifactId>
+    <version>0.0.1</version>
+    <type>pom</type>
+</dependency>
+```
+
 assuming you have following triples in your database
 
 ```
