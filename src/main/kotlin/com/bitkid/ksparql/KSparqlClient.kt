@@ -13,6 +13,8 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
+import org.eclipse.rdf4j.model.Resource
+import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.model.ValueFactory
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.query.BindingSet
@@ -21,6 +23,7 @@ import org.eclipse.rdf4j.repository.sparql.query.QueryStringUtil
 
 class KSparqlClient(
     private val queryEndpoint: String,
+    private val updateEndpoint: String,
     user: String,
     pass: String,
     private val readXmlBufferSize: Int = 1024 * 1024
@@ -49,6 +52,12 @@ class KSparqlClient(
         val queryString = QueryStringUtil.getTupleQueryString(query, bindingSet)
         return getQueryResult(queryString)
     }
+
+    suspend fun add(statements: Iterable<Statement>, endpoint: String = updateEndpoint, vararg contexts: Resource) {
+        val insertString = statements.createInsertDataCommand(*contexts)
+        return getSparqlResult(insertString, endpoint) {}
+    }
+
 
     suspend fun ask(
         query: String,
@@ -117,6 +126,7 @@ class KSparqlClient(
     override fun close() {
         client.close()
     }
+
 
 }
 

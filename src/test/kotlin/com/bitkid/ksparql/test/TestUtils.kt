@@ -1,9 +1,9 @@
 package com.bitkid.ksparql.test
 
+import com.bitkid.ksparql.iri
 import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.Literal
 import org.eclipse.rdf4j.model.Value
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.query.BindingSet
 import strikt.api.expectThat
 import strikt.assertions.containsExactly
@@ -13,9 +13,7 @@ import strikt.assertions.isEqualTo
 object TestUtils {
     val testEntity: IRI = iri("http://test-entity")
     const val dateMillis = 1607078826127
-    const val testQuery = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
-
-    fun iri(iriString: String): IRI = SimpleValueFactory.getInstance().createIRI(iriString)
+    const val fetchAllQuery = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
 
     fun expectResultsForStardogXml(results: List<BindingSet>) {
         expectThat(results).hasSize(10)

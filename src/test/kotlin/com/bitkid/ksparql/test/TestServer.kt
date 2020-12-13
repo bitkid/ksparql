@@ -25,7 +25,12 @@ class TestServer : AutoCloseable {
     }
 
     fun testClient(): KSparqlClient {
-        return KSparqlClient("http://localhost:${port}/test/query", "admin", "admin")
+        return KSparqlClient(
+            "http://localhost:${port}/test/query",
+            "http://localhost:${port}/test/update",
+            "admin",
+            "admin"
+        )
     }
 
     override fun close() {

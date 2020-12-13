@@ -2,8 +2,9 @@ package com.bitkid.ksparql.stardog
 
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.QueryException
+import com.bitkid.ksparql.iri
 import com.bitkid.ksparql.test.TestUtils.dateMillis
-import com.bitkid.ksparql.test.TestUtils.iri
+import com.bitkid.ksparql.test.TestUtils.fetchAllQuery
 import com.bitkid.ksparql.test.TestUtils.testEntity
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
@@ -30,56 +31,57 @@ class LocalStardogTest {
         init()
     }
 
-    private val client = KSparqlClient("http://localhost:5820/test/query", "admin", "admin")
+    private val client =
+        KSparqlClient("http://localhost:5820/test/query", "http://localhost:5820/test/update", "admin", "admin")
 
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
 
     @BeforeEach
     fun createTestData() {
-        repo.connection.use {
-            val builder = ModelBuilder()
-            builder.subject(testEntity)
-            builder.add(
-                iri("http://hasEntityRelation"),
-                iri("http://test-ref/${UUID.randomUUID()}")
-            )
-            builder.add(
-                iri("http://hasStringLiteral"),
-                "  some string "
-            )
-            builder.add(
-                iri("http://hasIntLiteral"),
-                234
-            )
-            builder.add(
-                iri("http://hasDateLiteral"),
-                Date(dateMillis)
-            )
-            builder.add(
-                iri("http://hasFloatLiteral"),
-                1.26.toFloat()
-            )
-            builder.add(
-                iri("http://hasDoubleLiteral"),
-                1.23
-            )
-            builder.add(
-                iri("http://hasByteLiteral"),
-                4.toByte()
-            )
-            builder.add(
-                iri("http://hasShortLiteral"),
-                5.toShort()
-            )
-            builder.add(
-                iri("http://hasLongLiteral"),
-                6.toLong()
-            )
-            builder.add(
-                iri("http://hasBooleanLiteral"),
-                true
-            )
-            it.add(builder.build())
+        val builder = ModelBuilder()
+        builder.subject(testEntity)
+        builder.add(
+            iri("http://hasEntityRelation"),
+            iri("http://test-ref/${UUID.randomUUID()}")
+        )
+        builder.add(
+            iri("http://hasStringLiteral"),
+            "  some string "
+        )
+        builder.add(
+            iri("http://hasIntLiteral"),
+            234
+        )
+        builder.add(
+            iri("http://hasDateLiteral"),
+            Date(dateMillis)
+        )
+        builder.add(
+            iri("http://hasFloatLiteral"),
+            1.26.toFloat()
+        )
+        builder.add(
+            iri("http://hasDoubleLiteral"),
+            1.23
+        )
+        builder.add(
+            iri("http://hasByteLiteral"),
+            4.toByte()
+        )
+        builder.add(
+            iri("http://hasShortLiteral"),
+            5.toShort()
+        )
+        builder.add(
+            iri("http://hasLongLiteral"),
+            6.toLong()
+        )
+        builder.add(
+            iri("http://hasBooleanLiteral"),
+            true
+        )
+        runBlocking {
+            client.add(builder.build())
         }
     }
 
@@ -102,6 +104,19 @@ class LocalStardogTest {
             client.query(queryString).map { it.bindingSet }.toList()
         }
         expectThat(res1).isEqualTo(res2)
+    }
+
+    @Test
+    fun `can add`() {
+        val model = ModelBuilder().subject(testEntity)
+            .add(iri("http://propi"), "bla")
+            .add(iri("http://propi1"), 5)
+            .build()
+
+        runBlocking {
+            client.add(model, "http://localhost:5820/test/update")
+            expectThat(client.query(fetchAllQuery).toList()).hasSize(12)
+        }
     }
 
     @Test

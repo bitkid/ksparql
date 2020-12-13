@@ -65,11 +65,11 @@ class KSparqlClientTest {
     @Test
     fun `rdf4j and ksparql results are equal`() {
         val res1 = bigRepo.connection.use {
-            val query = it.prepareTupleQuery(TestUtils.testQuery)
+            val query = it.prepareTupleQuery(TestUtils.fetchAllQuery)
             query.evaluate().toList()
         }
         val res2 = runBlocking {
-            client.getQueryResult(TestUtils.testQuery, "http://localhost:${server.port}/test/big-query")
+            client.getQueryResult(TestUtils.fetchAllQuery, "http://localhost:${server.port}/test/big-query")
                 .map { it.bindingSet }.toList()
         }
         expectThat(res1).isEqualTo(res2)
@@ -82,7 +82,7 @@ class KSparqlClientTest {
         }
         val outputStream = ByteArrayOutputStream()
         bigRepo.connection.use {
-            val query = it.prepareTupleQuery(TestUtils.testQuery)
+            val query = it.prepareTupleQuery(TestUtils.fetchAllQuery)
             query.evaluate(SPARQLResultsCSVWriter(outputStream))
         }
         val csv2 = String(outputStream.toByteArray())

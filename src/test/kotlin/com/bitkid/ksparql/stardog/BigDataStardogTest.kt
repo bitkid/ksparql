@@ -1,7 +1,7 @@
 package com.bitkid.ksparql.stardog
 
 import com.bitkid.ksparql.KSparqlClient
-import com.bitkid.ksparql.test.TestUtils.iri
+import com.bitkid.ksparql.iri
 import com.bitkid.ksparql.test.TestUtils.testEntity
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -26,7 +26,8 @@ class BigDataStardogTest {
         init()
     }
 
-    private val client = KSparqlClient("http://localhost:5820/test/query", "admin", "admin")
+    private val client =
+        KSparqlClient("http://localhost:5820/test/query", "http://localhost:5820/test/update", "admin", "admin")
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
     private val numberOfEntries = 10
     private val numberOfInvocations = 10
