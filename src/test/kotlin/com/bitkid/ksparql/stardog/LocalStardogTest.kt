@@ -1,5 +1,6 @@
 package com.bitkid.ksparql.stardog
 
+import com.bitkid.ksparql.ClientConfig
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.QueryException
 import com.bitkid.ksparql.iri
@@ -23,20 +24,25 @@ import java.util.*
 
 @Disabled
 class LocalStardogTest {
+    companion object {
+        val localStardogConfig = ClientConfig(
+            databaseHost = "http://localhost",
+            databasePort = 5820,
+            databaseName = "test",
+            user = "admin",
+            password = "admin"
+        )
+    }
+
     private val repo = SPARQLRepository(
-        "http://localhost:5820/test/query",
-        "http://localhost:5820/test/update"
+        localStardogConfig.queryUrl,
+        localStardogConfig.updateUrl
     ).apply {
-        setUsernameAndPassword("admin", "admin")
+        setUsernameAndPassword(localStardogConfig.user, localStardogConfig.password)
         init()
     }
 
-    private val client = KSparqlClient(
-        queryEndpoint = "http://localhost:5820/test/query",
-        updateEndpoint = "http://localhost:5820/test/update",
-        user = "admin",
-        pass = "admin"
-    )
+    private val client = KSparqlClient(localStardogConfig)
 
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
 

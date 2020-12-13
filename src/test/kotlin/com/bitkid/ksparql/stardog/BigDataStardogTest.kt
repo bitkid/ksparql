@@ -2,6 +2,7 @@ package com.bitkid.ksparql.stardog
 
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.iri
+import com.bitkid.ksparql.stardog.LocalStardogTest.Companion.localStardogConfig
 import com.bitkid.ksparql.test.TestUtils.testEntity
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -19,35 +20,34 @@ import kotlin.system.measureTimeMillis
 @Disabled
 class BigDataStardogTest {
     private val repo = SPARQLRepository(
-        "http://localhost:5820/test/query",
-        "http://localhost:5820/test/update"
+        localStardogConfig.queryUrl,
+        localStardogConfig.updateUrl
     ).apply {
-        setUsernameAndPassword("admin", "admin")
+        setUsernameAndPassword(localStardogConfig.user, localStardogConfig.password)
         init()
     }
 
-    private val client =
-        KSparqlClient("http://localhost:5820/test/query", "http://localhost:5820/test/update", "admin", "admin")
+    private val client = KSparqlClient(localStardogConfig)
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
     private val numberOfEntries = 10
     private val numberOfInvocations = 10
 
     @BeforeEach
     fun createTestData() {
-        repo.connection.use { c ->
+        runBlocking {
             val builder = ModelBuilder()
             builder.subject(testEntity)
             repeat(numberOfEntries) {
                 builder.add(iri("http://bla$it"), "bla")
             }
-            c.add(builder.build())
+            client.add(builder.build())
         }
     }
 
     @AfterEach
     fun close() {
-        repo.connection.use {
-            it.clear()
+        runBlocking {
+            client.clear()
         }
         repo.shutDown()
         client.close()

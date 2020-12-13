@@ -1,5 +1,6 @@
 package com.bitkid.ksparql.test
 
+import com.bitkid.ksparql.ClientConfig
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.getQueryResults
 import com.bitkid.ksparql.writeCSVTo
@@ -26,10 +27,13 @@ class TestServer : AutoCloseable {
 
     fun testClient(): KSparqlClient {
         return KSparqlClient(
-            "http://localhost:${port}/test/query",
-            "http://localhost:${port}/test/update",
-            "admin",
-            "admin"
+            ClientConfig(
+                databaseHost = "http://localhost",
+                databasePort = port,
+                databaseName = "test",
+                user = "admin",
+                password = "admin"
+            )
         )
     }
 

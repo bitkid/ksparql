@@ -22,12 +22,21 @@ import org.eclipse.rdf4j.query.BindingSet
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import org.eclipse.rdf4j.repository.sparql.query.QueryStringUtil
 
+data class ClientConfig(
+    val databaseHost: String,
+    val databasePort: Int,
+    val databaseName: String,
+    val user: String,
+    val password: String,
+    val queryEndpoint: String = "query",
+    val updateEndpoint: String = "update",
+    val readXmlBufferSize: Int = 1024 * 1024,
+    val updateUrl: String = "$databaseHost:$databasePort/$databaseName/$updateEndpoint",
+    val queryUrl: String = "$databaseHost:$databasePort/$databaseName/$queryEndpoint"
+)
+
 class KSparqlClient(
-    private val queryEndpoint: String,
-    private val updateEndpoint: String,
-    user: String,
-    pass: String,
-    private val readXmlBufferSize: Int = 1024 * 1024
+    private val config: ClientConfig
 ) : AutoCloseable {
     companion object {
         const val XML_ACCEPT_HEADER = "application/sparql-results+xml"
@@ -39,8 +48,8 @@ class KSparqlClient(
         expectSuccess = false
         install(Auth) {
             basic {
-                username = user
-                password = pass
+                username = config.user
+                password = config.password
             }
         }
     }
@@ -54,21 +63,31 @@ class KSparqlClient(
         return getQueryResult(queryString)
     }
 
-    suspend fun add(statements: Iterable<Statement>, endpoint: String = updateEndpoint, vararg contexts: Resource) {
+    suspend fun add(
+        statements: Iterable<Statement>,
+        endpoint: String = config.updateUrl,
+        vararg contexts: Resource
+    ) {
         val insertString = statements.createInsertDataCommand(*contexts)
         return getSparqlResult(insertString, endpoint) {}
     }
 
-    suspend fun clear(endpoint: String = updateEndpoint, vararg contexts: Resource) {
+    suspend fun clear(endpoint: String = config.updateUrl, vararg contexts: Resource?) {
         val clearString = if (contexts.isEmpty()) {
             "CLEAR ALL"
         } else {
             buildString {
                 for (context in contexts) {
-                    if (context is IRI) {
-                        append("CLEAR ALL GRAPH <" + context.stringValue() + ">; ")
-                    } else {
-                        throw RuntimeException("SPARQL does not support named graphs identified by blank nodes.")
+                    when (context) {
+                        null -> {
+                            append("CLEAR ALL DEFAULT; ")
+                        }
+                        is IRI -> {
+                            append("CLEAR ALL GRAPH <" + context.stringValue() + ">; ")
+                        }
+                        else -> {
+                            throw RuntimeException("SPARQL does not support named graphs identified by blank nodes.")
+                        }
                     }
                 }
             }
@@ -87,19 +106,19 @@ class KSparqlClient(
 
     internal suspend fun getBooleanResult(
         query: String,
-        endpoint: String = queryEndpoint
+        endpoint: String = config.queryUrl
     ) = getSparqlResult(query, endpoint) {
         it.receive<ByteReadChannel>().getBooleanResult(
-            bufferSize = readXmlBufferSize
+            bufferSize = config.readXmlBufferSize
         )
     }
 
     internal suspend fun getQueryResult(
         query: String,
-        endpoint: String = queryEndpoint
+        endpoint: String = config.queryUrl
     ): Flow<RdfResult> = getSparqlResult(query, endpoint) {
         it.receive<ByteReadChannel>().getQueryResults(
-            bufferSize = readXmlBufferSize
+            bufferSize = config.readXmlBufferSize
         )
     }
 
