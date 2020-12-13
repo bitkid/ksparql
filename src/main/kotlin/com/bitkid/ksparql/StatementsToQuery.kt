@@ -11,27 +11,27 @@ import org.eclipse.rdf4j.query.parser.sparql.SPARQLUtil
  * again basically copied from rdf4j and made it more kotlin style
  */
 fun Iterable<Statement>.createInsertDataCommand(vararg contexts: Resource): String {
-    val qb = StringBuilder()
-    qb.append("INSERT DATA \n")
-    qb.append("{ \n")
-    if (contexts.isNotEmpty()) {
-        for (context in contexts) {
-            val namedGraph = if (context is BNode) {
-                // SPARQL does not allow blank nodes as named graph
-                // identifiers, so we need to skolemize
-                // the blank node id.
-                "urn:nodeid:" + context.stringValue()
-            } else context.stringValue()
+    return buildString {
+        append("INSERT DATA \n")
+        append("{ \n")
+        if (contexts.isNotEmpty()) {
+            for (context in contexts) {
+                val namedGraph = if (context is BNode) {
+                    // SPARQL does not allow blank nodes as named graph
+                    // identifiers, so we need to skolemize
+                    // the blank node id.
+                    "urn:nodeid:" + context.stringValue()
+                } else context.stringValue()
 
-            qb.append("    GRAPH <$namedGraph> { \n")
-            createDataBody(qb, true)
-            qb.append(" } \n")
+                append("    GRAPH <$namedGraph> { \n")
+                createDataBody(this, true)
+                append(" } \n")
+            }
+        } else {
+            createDataBody(this, false)
         }
-    } else {
-        createDataBody(qb, false)
+        append("}")
     }
-    qb.append("}")
-    return qb.toString()
 }
 
 private fun Iterable<Statement>.createDataBody(qb: StringBuilder, ignoreContext: Boolean) {
