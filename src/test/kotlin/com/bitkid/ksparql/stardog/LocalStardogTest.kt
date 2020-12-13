@@ -87,8 +87,8 @@ class LocalStardogTest {
 
     @AfterEach
     fun close() {
-        repo.connection.use {
-            it.clear()
+        runBlocking {
+            client.clear()
         }
         repo.shutDown()
         client.close()

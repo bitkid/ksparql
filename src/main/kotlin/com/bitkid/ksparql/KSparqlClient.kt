@@ -13,6 +13,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
+import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.Resource
 import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.model.ValueFactory
@@ -58,6 +59,22 @@ class KSparqlClient(
         return getSparqlResult(insertString, endpoint) {}
     }
 
+    suspend fun clear(endpoint: String = updateEndpoint, vararg contexts: Resource) {
+        val clearString = if (contexts.isEmpty()) {
+            "CLEAR ALL"
+        } else {
+            buildString {
+                for (context in contexts) {
+                    if (context is IRI) {
+                        append("CLEAR ALL GRAPH <" + context.stringValue() + ">; ")
+                    } else {
+                        throw RuntimeException("SPARQL does not support named graphs identified by blank nodes.")
+                    }
+                }
+            }
+        }
+        return getSparqlResult(clearString, endpoint) {}
+    }
 
     suspend fun ask(
         query: String,
