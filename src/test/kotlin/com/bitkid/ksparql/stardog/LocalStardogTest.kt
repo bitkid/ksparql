@@ -31,8 +31,12 @@ class LocalStardogTest {
         init()
     }
 
-    private val client =
-        KSparqlClient("http://localhost:5820/test/query", "http://localhost:5820/test/update", "admin", "admin")
+    private val client = KSparqlClient(
+        queryEndpoint = "http://localhost:5820/test/query",
+        updateEndpoint = "http://localhost:5820/test/update",
+        user = "admin",
+        pass = "admin"
+    )
 
     private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
 
