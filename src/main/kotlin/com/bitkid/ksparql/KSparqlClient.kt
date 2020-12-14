@@ -13,7 +13,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
-import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.Resource
 import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.model.ValueFactory
@@ -75,6 +74,32 @@ class KSparqlClient(
         return getQueryResult(queryString)
     }
 
+    suspend fun ask(
+        query: String,
+        bindings: MapBindingSet.(vf: ValueFactory) -> Unit = {}
+    ): Boolean {
+        val bindingSet = createBindingSet(bindings)
+        val queryString = QueryStringUtil.getBooleanQueryString(query, bindingSet)
+        return getBooleanResult(queryString)
+    }
+
+    suspend fun clear(endpoint: String = config.updateUrl, vararg contexts: Resource?) {
+        return getSparqlResult(createClearString(contexts), endpoint) {}
+    }
+
+    suspend fun add(
+        statements: Iterable<Statement>,
+        endpoint: String = config.updateUrl,
+        vararg contexts: Resource
+    ) {
+        val insertString = statements.createInsertDataCommand(*contexts)
+        return getSparqlResult(insertString, endpoint) {}
+    }
+
+    override fun close() {
+        client.close()
+    }
+
     suspend fun begin(reasoning: Boolean = false): Transaction {
         val response = client.post<HttpResponse>("${config.transactionBaseUrl}/begin?reasoning=$reasoning")
         checkResponse(response)
@@ -91,13 +116,15 @@ class KSparqlClient(
         checkResponse(response)
     }
 
-    suspend fun add(
-        statements: Iterable<Statement>,
-        endpoint: String = config.updateUrl,
-        vararg contexts: Resource
-    ) {
-        val insertString = statements.createInsertDataCommand(*contexts)
-        return getSparqlResult(insertString, endpoint) {}
+    suspend fun transaction(reasoning: Boolean = false, function: suspend Transaction.() -> Unit) {
+        val transaction = begin(reasoning)
+        try {
+            function(transaction)
+            commit(transaction)
+        } catch (e: Exception) {
+            rollback(transaction)
+            throw e
+        }
     }
 
     internal suspend fun addInTransaction(
@@ -111,38 +138,6 @@ class KSparqlClient(
             body = insertBody
         }
         checkResponse(response)
-    }
-
-    suspend fun clear(endpoint: String = config.updateUrl, vararg contexts: Resource?) {
-        val clearString = if (contexts.isEmpty()) {
-            "CLEAR ALL"
-        } else {
-            buildString {
-                for (context in contexts) {
-                    when (context) {
-                        null -> {
-                            append("CLEAR ALL DEFAULT; ")
-                        }
-                        is IRI -> {
-                            append("CLEAR ALL GRAPH <" + context.stringValue() + ">; ")
-                        }
-                        else -> {
-                            throw RuntimeException("SPARQL does not support named graphs identified by blank nodes.")
-                        }
-                    }
-                }
-            }
-        }
-        return getSparqlResult(clearString, endpoint) {}
-    }
-
-    suspend fun ask(
-        query: String,
-        bindings: MapBindingSet.(vf: ValueFactory) -> Unit = {}
-    ): Boolean {
-        val bindingSet = createBindingSet(bindings)
-        val queryString = QueryStringUtil.getBooleanQueryString(query, bindingSet)
-        return getBooleanResult(queryString)
     }
 
     internal suspend fun getBooleanResult(
@@ -198,27 +193,13 @@ class KSparqlClient(
         val error = try {
             jackson.readValue<ErrorResponse>(content)
         } catch (e: Exception) {
-            return HttpException(content, status)
+            return if (content.isBlank())
+                HttpException("Server returned status $status", status)
+            else
+                HttpException(content, status)
         }
         return QueryException(error, status)
     }
-
-    override fun close() {
-        client.close()
-    }
-
-    suspend fun transaction(reasoning: Boolean = false, function: suspend Transaction.() -> Unit) {
-        val transaction = begin(reasoning)
-        try {
-            function(transaction)
-            commit(transaction)
-        } catch (e: Exception) {
-            rollback(transaction)
-            throw e
-        }
-    }
-
-
 }
 
 data class RdfResult(val bindingNames: List<String>, val bindingSet: BindingSet)

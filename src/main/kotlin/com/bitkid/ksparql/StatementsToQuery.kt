@@ -1,9 +1,6 @@
 package com.bitkid.ksparql
 
-import org.eclipse.rdf4j.model.BNode
-import org.eclipse.rdf4j.model.Literal
-import org.eclipse.rdf4j.model.Resource
-import org.eclipse.rdf4j.model.Statement
+import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.util.Literals
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLUtil
 
@@ -31,6 +28,28 @@ fun Iterable<Statement>.createInsertDataCommand(vararg contexts: Resource): Stri
             createDataBody(this, false)
         }
         append("}")
+    }
+}
+
+fun createClearString(contexts: Array<out Resource?>): String {
+    return if (contexts.isEmpty()) {
+        "CLEAR ALL"
+    } else {
+        buildString {
+            for (context in contexts) {
+                when (context) {
+                    null -> {
+                        append("CLEAR ALL DEFAULT; ")
+                    }
+                    is IRI -> {
+                        append("CLEAR ALL GRAPH <" + context.stringValue() + ">; ")
+                    }
+                    else -> {
+                        throw RuntimeException("SPARQL does not support named graphs identified by blank nodes.")
+                    }
+                }
+            }
+        }
     }
 }
 
