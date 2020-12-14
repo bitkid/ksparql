@@ -53,6 +53,11 @@ val model = ModelBuilder().subject("http://someEntity")
     .add(iri("http://prop2"), 5)
     .build()
 
+val anotherModel = ModelBuilder().subject("http://otherEntity")
+    .add(iri("http://prop3"), "bla")
+    .add(iri("http://prop4"), 5)
+    .build()
+
 runBlocking {
     // atomic add of all statements in the model
     client.add(model)
@@ -60,11 +65,13 @@ runBlocking {
     // using a transaction explicitly
     val transaction = client.begin()
     transaction.add(model)
-    client.rollback(transaction)
+    transaction.add(anotherModel)
+    client.commit(transaction)
     
     // or the closure
     client.transaction {
         add(model)
+        add(anotherModel)
     }
 }
 ```
@@ -118,11 +125,13 @@ i totally accept PRs if i like them. run the tests with
 ./gradlew test
 ```
 
-the stardog tests are set to @Disabled, if you want to run them in your IDE install docker and run
+the stardog tests are set to @Disabled, if you want to run them in your IDE install docker, run
 
 ```shell
 ./start_stardog.sh
 ```
+
+and create a database called test (i use stardog studio for that)
 
 ## license
 
