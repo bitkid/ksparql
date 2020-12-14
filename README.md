@@ -10,11 +10,13 @@ aalto-xml async xml parser fed by a ktor ByteReadChannel for processing the spar
 
 ## limitations
 
-this library has only been tested with stardog (7.4.4) but in theory it should handle all databases with query endpoints
-that return sparql xml (https://www.w3.org/TR/rdf-sparql-XMLres/). be aware, that not the full XML tag set is supported
-yet. update queries are totally untested, so for now, you could call it a read-only client.
+this library has only been tested with stardog (7.4.4) and no other triple stores but in theory it should handle all
+databases with query endpoints that return sparql xml (https://www.w3.org/TR/rdf-sparql-XMLres/). be aware, that not the
+full XML tag set is supported yet. transactions will probably only work with stardog.
 
 ## usage
+
+### setup
 
 get the package with gradle / maven
 
@@ -31,6 +33,44 @@ implementation("com.bitkid:ksparql:0.0.1")
 </dependency>
 ```
 
+and create the client
+
+```kotlin
+val client = KSparqlClient(ClientConfig(
+    databaseHost = "http://localhost",
+    databasePort = 5820,
+    databaseName = "test",
+    user = "admin",
+    password = "admin"
+))
+```
+
+### add data
+
+```kotlin
+val model = ModelBuilder().subject("http://someEntity")
+    .add(iri("http://prop1"), "bla")
+    .add(iri("http://prop2"), 5)
+    .build()
+
+runBlocking {
+    // atomic add of all statements in the model
+    client.add(model)
+    
+    // using a transaction explicitly
+    val transaction = client.begin()
+    transaction.add(model)
+    client.rollback(transaction)
+    
+    // or the closure
+    client.transaction {
+        add(model)
+    }
+}
+```
+
+### query data
+
 assuming you have following triples in your database
 
 ```
@@ -43,12 +83,6 @@ this is how the client can be used to execute queries
 
 ```kotlin
 runBlocking {
-    val client = KSparqlClient(
-        "http://localhost:5280/test/query",
-        "admin",
-        "admin"
-    )
-
     client.query("SELECT ?a ?b ?c WHERE { ?a ?b ?c }") { valueFactory ->
         addBinding("a", valueFactory.createIRI("http://bob"))
     }.collect { rdfResult ->
