@@ -207,8 +207,8 @@ class KSparqlClient(
         client.close()
     }
 
-    suspend fun transaction(function: suspend Transaction.() -> Unit) {
-        val transaction = begin()
+    suspend fun transaction(reasoning: Boolean = false, function: suspend Transaction.() -> Unit) {
+        val transaction = begin(reasoning)
         try {
             function(transaction)
             commit(transaction)
