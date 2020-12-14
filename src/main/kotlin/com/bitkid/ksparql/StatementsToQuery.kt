@@ -34,7 +34,7 @@ fun Iterable<Statement>.createInsertDataCommand(vararg contexts: Resource): Stri
     }
 }
 
-private fun Iterable<Statement>.createDataBody(qb: StringBuilder, ignoreContext: Boolean) {
+fun Iterable<Statement>.createDataBody(qb: StringBuilder, ignoreContext: Boolean) {
     for (st in this) {
         val context = st.context
         if (!ignoreContext) {

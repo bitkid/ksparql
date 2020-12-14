@@ -130,6 +130,50 @@ class LocalStardogTest {
     }
 
     @Test
+    fun `can do transaction with the client`() {
+        val model = ModelBuilder().subject(testEntity)
+            .add(iri("http://propi"), "bla")
+            .add(iri("http://propi1"), 5)
+            .build()
+
+        runBlocking {
+            val transaction = client.begin()
+            transaction.add(model)
+            client.rollback(transaction)
+            expectThat(client.query(fetchAllQuery).toList()).hasSize(10)
+
+            val t = client.begin()
+            t.add(model)
+            expectThat(client.query(fetchAllQuery).toList()).hasSize(10)
+            client.commit(t)
+            expectThat(client.query(fetchAllQuery).toList()).hasSize(12)
+        }
+    }
+
+    @Test
+    fun `can do closure transaction`() {
+        val model = ModelBuilder().subject(testEntity)
+            .add(iri("http://propi"), "bla")
+            .add(iri("http://propi1"), 5)
+            .build()
+
+        runBlocking {
+            expectThrows<RuntimeException> {
+                client.transaction {
+                    add(model)
+                    throw RuntimeException("bla")
+                }
+            }.get { message }.isEqualTo("bla")
+            expectThat(client.query(fetchAllQuery).toList()).hasSize(10)
+
+            client.transaction {
+                add(model)
+            }
+            expectThat(client.query(fetchAllQuery).toList()).hasSize(12)
+        }
+    }
+
+    @Test
     fun `can run query against stardog with ksparql`() {
         runBlocking {
             val result = client.query(queryString) {
