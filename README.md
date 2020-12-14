@@ -98,6 +98,18 @@ runBlocking {
 }
 ```
 
+### clear data
+
+```kotlin
+runBlocking {
+    // delete everything
+    client.clear()
+    
+    // delete named graph
+    client.clear(iri("http://my-named-graph"))
+}
+```
+
 ## contribute
 
 i totally accept PRs if i like them. run the tests with
