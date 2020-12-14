@@ -38,16 +38,13 @@ data class ClientConfig(
 )
 
 class Transaction(val id: UUID, private val client: KSparqlClient) {
-    suspend fun add(
-        statements: Iterable<Statement>,
-        endpoint: String = "${client.config.databaseBasePath}/$id/add",
-    ) {
-        client.addInTransaction(statements, endpoint)
+    suspend fun add(statements: Iterable<Statement>) {
+        client.addInTransaction(statements, id)
     }
 }
 
 class KSparqlClient(
-    internal val config: ClientConfig
+    private val config: ClientConfig
 ) : AutoCloseable {
     companion object {
         const val XML_ACCEPT_HEADER = "application/sparql-results+xml"
@@ -83,17 +80,13 @@ class KSparqlClient(
         return getBooleanResult(queryString)
     }
 
-    suspend fun clear(endpoint: String = config.updateUrl, vararg contexts: Resource?) {
-        return getSparqlResult(createClearString(contexts), endpoint) {}
+    suspend fun clear(vararg contexts: Resource?) {
+        return getSparqlResult(createClearString(contexts), config.updateUrl) {}
     }
 
-    suspend fun add(
-        statements: Iterable<Statement>,
-        endpoint: String = config.updateUrl,
-        vararg contexts: Resource
-    ) {
+    suspend fun add(statements: Iterable<Statement>, vararg contexts: Resource) {
         val insertString = statements.createInsertDataCommand(*contexts)
-        return getSparqlResult(insertString, endpoint) {}
+        return getSparqlResult(insertString, config.updateUrl) {}
     }
 
     override fun close() {
@@ -116,10 +109,13 @@ class KSparqlClient(
         checkResponse(response)
     }
 
-    suspend fun transaction(reasoning: Boolean = false, function: suspend Transaction.() -> Unit) {
+    suspend fun transaction(
+        reasoning: Boolean = false,
+        block: suspend Transaction.() -> Unit
+    ) {
         val transaction = begin(reasoning)
         try {
-            function(transaction)
+            block(transaction)
             commit(transaction)
         } catch (e: Exception) {
             rollback(transaction)
@@ -129,12 +125,12 @@ class KSparqlClient(
 
     internal suspend fun addInTransaction(
         statements: Iterable<Statement>,
-        endpoint: String,
+        id: UUID
     ) {
         val insertBody = buildString {
             statements.createDataBody(this, true)
         }
-        val response = client.post<HttpResponse>(endpoint) {
+        val response = client.post<HttpResponse>("${config.databaseBasePath}/$id/add") {
             body = insertBody
         }
         checkResponse(response)

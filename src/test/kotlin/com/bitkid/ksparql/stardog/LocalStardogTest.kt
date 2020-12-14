@@ -44,8 +44,6 @@ class LocalStardogTest {
 
     private val client = KSparqlClient(localStardogConfig)
 
-    private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
-
     @BeforeEach
     fun createTestData() {
         val builder = ModelBuilder()
@@ -107,11 +105,11 @@ class LocalStardogTest {
     @Test
     fun `results are equal`() {
         val res1 = repo.connection.use {
-            val query = it.prepareTupleQuery(queryString)
+            val query = it.prepareTupleQuery(fetchAllQuery)
             query.evaluate().toList()
         }
         val res2 = runBlocking {
-            client.query(queryString).map { it.bindingSet }.toList()
+            client.query(fetchAllQuery).map { it.bindingSet }.toList()
         }
         expectThat(res1).isEqualTo(res2)
     }
@@ -124,7 +122,7 @@ class LocalStardogTest {
             .build()
 
         runBlocking {
-            client.add(model, "http://localhost:5820/test/update")
+            client.add(model)
             expectThat(client.query(fetchAllQuery).toList()).hasSize(12)
         }
     }
@@ -176,7 +174,7 @@ class LocalStardogTest {
     @Test
     fun `can run query against stardog with ksparql`() {
         runBlocking {
-            val result = client.query(queryString) {
+            val result = client.query(fetchAllQuery) {
                 addBinding("b", it.createIRI("http://hasEntityRelation"))
             }.toList()
             expectThat(result).hasSize(1)
@@ -222,7 +220,7 @@ class LocalStardogTest {
     @Test
     fun `print xml`() {
         runBlocking {
-            println(DataFetcher().getQueryResponseAsString("http://localhost:5820/test/query", queryString))
+            println(DataFetcher().getQueryResponseAsString("http://localhost:5820/test/query", fetchAllQuery))
         }
     }
 }

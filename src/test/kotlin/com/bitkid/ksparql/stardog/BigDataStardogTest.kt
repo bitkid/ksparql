@@ -3,6 +3,7 @@ package com.bitkid.ksparql.stardog
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.iri
 import com.bitkid.ksparql.stardog.LocalStardogTest.Companion.localStardogConfig
+import com.bitkid.ksparql.test.TestUtils
 import com.bitkid.ksparql.test.TestUtils.testEntity
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -28,7 +29,7 @@ class BigDataStardogTest {
     }
 
     private val client = KSparqlClient(localStardogConfig)
-    private val queryString = "SELECT ?a ?b ?c WHERE { ?a ?b ?c }"
+
     private val numberOfEntries = 10
     private val numberOfInvocations = 10
 
@@ -58,7 +59,7 @@ class BigDataStardogTest {
     fun `can run query against stardog with rdf4j`() {
         val millis = measureAverage {
             repo.connection.use {
-                val query = it.prepareTupleQuery(queryString)
+                val query = it.prepareTupleQuery(TestUtils.fetchAllQuery)
                 val res = query.evaluate().toList()
                 expectThat(res).hasSize(numberOfEntries)
             }
@@ -70,7 +71,7 @@ class BigDataStardogTest {
     fun `can run query against stardog with ksparql`() {
         val millis = measureAverage {
             runBlocking {
-                val res = client.query(queryString).toList()
+                val res = client.query(TestUtils.fetchAllQuery).toList()
                 expectThat(res).hasSize(numberOfEntries)
             }
         }
