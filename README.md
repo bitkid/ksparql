@@ -18,17 +18,17 @@ full XML tag set is supported yet. transactions will probably only work with sta
 
 ### setup
 
-get the package with gradle / maven
+get the package with gradle / maven from jCenter
 
 ```kotlin
-implementation("com.bitkid:ksparql:0.0.1")
+implementation("com.bitkid:ksparql:0.0.2")
 ```
 
 ```xml
 <dependency>
     <groupId>com.bitkid</groupId>
     <artifactId>ksparql</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <type>pom</type>
 </dependency>
 ```
