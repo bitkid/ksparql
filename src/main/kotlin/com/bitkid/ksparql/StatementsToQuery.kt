@@ -6,6 +6,8 @@ import org.eclipse.rdf4j.query.parser.sparql.SPARQLUtil
 
 /**
  * again basically copied from rdf4j and made it more kotlin style
+ *
+ * @see org.eclipse.rdf4j.repository.sparql.SPARQLConnection
  */
 fun Iterable<Statement>.createInsertDataCommand(vararg contexts: Resource): String {
     return buildString {
