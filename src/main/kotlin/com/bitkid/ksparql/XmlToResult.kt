@@ -14,7 +14,10 @@ import javax.xml.stream.XMLStreamConstants
 
 /**
  * convert sparql xml data read from a @ByteReadChannel to a
- * flow of @RdfResult objects
+ * flow of @RdfResult objects. again this heavily uses rdf4j code
+ *
+ * @see org.eclipse.rdf4j.query.resultio.sparqlxml.SPARQLResultsXMLConstants
+ * @see org.eclipse.rdf4j.query.resultio.sparqlxml.SPARQLResultsSAXParser
  */
 internal fun ByteReadChannel.getQueryResults(
     valueFactory: ValueFactory = SimpleValueFactory.getInstance(),
