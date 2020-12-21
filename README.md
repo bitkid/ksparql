@@ -135,4 +135,9 @@ and create a database called test (i use stardog studio for that)
 
 ## license
 
+I use modified rdf4j code a lot and it is published under this https://github.com/eclipse/rdf4j/blob/master/LICENSE
+license.
+
+This library is published with the MIT license though.
+
 [MIT](https://choosealicense.com/licenses/mit/)
