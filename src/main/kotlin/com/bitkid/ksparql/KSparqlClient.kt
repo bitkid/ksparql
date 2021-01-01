@@ -81,12 +81,12 @@ class KSparqlClient(
     }
 
     suspend fun clear(vararg contexts: Resource?) {
-        return getSparqlResult(createClearString(contexts), config.updateUrl) {}
+        return getSparqlResult(createClearString(contexts), config.updateUrl, "update") {}
     }
 
     suspend fun add(statements: Iterable<Statement>, vararg contexts: Resource) {
         val insertString = statements.createInsertDataCommand(*contexts)
-        return getSparqlResult(insertString, config.updateUrl) {}
+        return getSparqlResult(insertString, config.updateUrl, "update") {}
     }
 
     override fun close() {
@@ -163,11 +163,12 @@ class KSparqlClient(
     private suspend fun <T> getSparqlResult(
         query: String,
         endpoint: String,
+        parameterName: String = "query",
         mapper: suspend (HttpResponse) -> T
     ): T {
         val response = client.submitForm<HttpResponse>(endpoint,
             formParameters = Parameters.build {
-                append("query", query)
+                append(parameterName, query)
             }) {
             header(HttpHeaders.Accept, XML_ACCEPT_HEADER)
         }

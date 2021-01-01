@@ -47,6 +47,8 @@ dependencies {
     testImplementation("io.strikt:strikt-core:+")
     testImplementation("io.ktor:ktor-server-netty:$ktorVersion")
 
+    testImplementation("org.apache.jena:jena-fuseki-embedded:3.8.0")
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:+")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:+")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:+") {
