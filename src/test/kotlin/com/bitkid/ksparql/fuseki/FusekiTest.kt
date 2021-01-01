@@ -1,4 +1,4 @@
-package com.bitkid.ksparql.fusaki
+package com.bitkid.ksparql.fuseki
 
 import com.bitkid.ksparql.ClientConfig
 import com.bitkid.ksparql.HttpException
