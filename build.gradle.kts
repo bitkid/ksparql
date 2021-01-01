@@ -2,7 +2,7 @@ import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val kotlinVersion = "1.4.21"
-val ktorVersion = "1.4.3"
+val ktorVersion = "1.5.0"
 val rdf4jVersion = "3.5.0"
 
 group = "com.bitkid"
