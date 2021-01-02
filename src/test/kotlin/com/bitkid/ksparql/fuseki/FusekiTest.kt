@@ -4,7 +4,6 @@ import com.bitkid.ksparql.ClientConfig
 import com.bitkid.ksparql.HttpException
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.iri
-import com.bitkid.ksparql.test.FreePorts
 import com.bitkid.ksparql.test.TestUtils.dateMillis
 import com.bitkid.ksparql.test.TestUtils.fetchAllQuery
 import com.bitkid.ksparql.test.TestUtils.testEntity
@@ -26,15 +25,16 @@ import java.util.*
 
 class FusekiTest {
 
-    private val port = FreePorts.select()
-    private val server = FusekiServer.create().setPort(port).add("/test", DatasetFactory.createTxnMem()).build().apply {
-        start()
-    }
+    private val databaseName = "test"
+    private val server =
+        FusekiServer.create().setPort(0).add("/$databaseName", DatasetFactory.createTxnMem()).build().apply {
+            start()
+        }
 
     private val localFusekiConfig = ClientConfig(
         databaseHost = "http://localhost",
-        databasePort = port,
-        databaseName = "test",
+        databasePort = server.port,
+        databaseName = databaseName,
         user = "admin",
         password = "admin"
     )
