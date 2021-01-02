@@ -10,9 +10,9 @@ aalto-xml async xml parser fed by a ktor ByteReadChannel for processing the spar
 
 ## limitations
 
-this library has only been tested with stardog (7.4.4) and no other triple stores but in theory it should handle all
-databases with query endpoints that return sparql xml (https://www.w3.org/TR/rdf-sparql-XMLres/). be aware, that not the
-full XML tag set is supported yet. transactions will probably only work with stardog.
+this library has been tested with stardog (7.4.4) and Fuseki (3.8.0). theoretically, it should handle all databases with
+query endpoints that return sparql xml (https://www.w3.org/TR/rdf-sparql-XMLres/). be aware, that not the full XML tag
+set is supported yet.
 
 ## usage
 
@@ -66,7 +66,7 @@ runBlocking {
     val transaction = client.begin()
     transaction.add(model)
     transaction.add(anotherModel)
-    client.commit(transaction)
+    transaction.commit()
     
     // or the closure
     client.transaction {
