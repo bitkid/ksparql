@@ -97,9 +97,6 @@ class FusekiTest {
 
     @AfterEach
     fun close() {
-        runBlocking {
-            client.clear()
-        }
         repo.shutDown()
         client.close()
         server.stop()
