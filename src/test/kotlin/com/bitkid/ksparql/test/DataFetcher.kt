@@ -1,4 +1,4 @@
-package com.bitkid.ksparql.stardog
+package com.bitkid.ksparql.test
 
 import com.bitkid.ksparql.KSparqlClient
 import io.ktor.client.*

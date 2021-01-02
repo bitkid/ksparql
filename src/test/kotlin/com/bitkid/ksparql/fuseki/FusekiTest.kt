@@ -4,6 +4,7 @@ import com.bitkid.ksparql.ClientConfig
 import com.bitkid.ksparql.HttpException
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.iri
+import com.bitkid.ksparql.test.DataFetcher
 import com.bitkid.ksparql.test.TestUtils.dateMillis
 import com.bitkid.ksparql.test.TestUtils.fetchAllQuery
 import com.bitkid.ksparql.test.TestUtils.testEntity
@@ -16,6 +17,7 @@ import org.eclipse.rdf4j.model.util.ModelBuilder
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
@@ -161,6 +163,32 @@ class FusekiTest {
             expectThrows<HttpException> {
                 client.getQueryResult("slelect bla *")
             }
+        }
+    }
+
+    @Disabled
+    @Test
+    fun `print error json`() {
+        runBlocking {
+            println(
+                DataFetcher().getQueryResponseAsString(
+                    "http://localhost:${server.port}/$databaseName/query",
+                    "slelect * from"
+                )
+            )
+        }
+    }
+
+    @Disabled
+    @Test
+    fun `print xml`() {
+        runBlocking {
+            println(
+                DataFetcher().getQueryResponseAsString(
+                    "http://localhost:${server.port}/$databaseName/query",
+                    fetchAllQuery
+                )
+            )
         }
     }
 }

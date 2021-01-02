@@ -32,11 +32,11 @@ class RecordingResultHandler : QueryResultHandler {
     var bindingSets: List<BindingSet> = emptyList()
 
     override fun handleBoolean(value: Boolean) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException()
     }
 
     override fun handleLinks(linkUrls: MutableList<String>?) {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException()
     }
 
     override fun startQueryResult(bindingNames: List<String>) {
