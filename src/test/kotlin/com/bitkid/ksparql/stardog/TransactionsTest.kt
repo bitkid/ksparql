@@ -11,12 +11,15 @@ import org.eclipse.rdf4j.model.util.ModelBuilder
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.parallel.Execution
+import org.junit.jupiter.api.parallel.ExecutionMode
 import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.hasSize
 import strikt.assertions.isEqualTo
 
 @Disabled
+@Execution(ExecutionMode.SAME_THREAD)
 class TransactionsTest {
 
     private val client = KSparqlClient(
@@ -29,6 +32,11 @@ class TransactionsTest {
         )
     )
 
+    private val model = ModelBuilder().subject(testEntity)
+        .add(iri("http://propi"), "bla")
+        .add(iri("http://propi1"), 5)
+        .build()
+
     @AfterEach
     fun close() {
         runBlocking {
@@ -38,46 +46,32 @@ class TransactionsTest {
     }
 
     @Test
-    fun `can do transaction with the client`() {
-        val model = ModelBuilder().subject(testEntity)
-            .add(iri("http://propi"), "bla")
-            .add(iri("http://propi1"), 5)
-            .build()
+    fun `can do transaction with the client`() = runBlocking<Unit> {
+        val tr = client.begin()
+        tr.add(model)
+        tr.rollback()
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(0)
 
-        runBlocking {
-            val transaction = client.begin()
-            transaction.add(model)
-            client.rollback(transaction)
-            expectThat(client.query(fetchAllQuery).toList()).hasSize(0)
-
-            val t = client.begin()
-            t.add(model)
-            expectThat(client.query(fetchAllQuery).toList()).hasSize(0)
-            client.commit(t)
-            expectThat(client.query(fetchAllQuery).toList()).hasSize(2)
-        }
+        val tc = client.begin()
+        tc.add(model)
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(0)
+        tc.commit()
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(2)
     }
 
     @Test
-    fun `can do closure transaction`() {
-        val model = ModelBuilder().subject(testEntity)
-            .add(iri("http://propi"), "bla")
-            .add(iri("http://propi1"), 5)
-            .build()
-
-        runBlocking {
-            expectThrows<RuntimeException> {
-                client.transaction {
-                    add(model)
-                    throw RuntimeException("bla")
-                }
-            }.get { message }.isEqualTo("bla")
-            expectThat(client.query(fetchAllQuery).toList()).hasSize(0)
-
+    fun `can do closure transaction`() = runBlocking<Unit> {
+        expectThrows<RuntimeException> {
             client.transaction {
                 add(model)
+                throw RuntimeException("bla")
             }
-            expectThat(client.query(fetchAllQuery).toList()).hasSize(2)
+        }.get { message }.isEqualTo("bla")
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(0)
+
+        client.transaction {
+            add(model)
         }
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(2)
     }
 }

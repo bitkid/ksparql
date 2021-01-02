@@ -55,6 +55,12 @@ fun createClearString(contexts: Array<out Resource?>): String {
     }
 }
 
+fun Iterable<Statement>.asString(): String {
+    return buildString {
+        createDataBody(this, true)
+    }
+}
+
 fun Iterable<Statement>.createDataBody(qb: StringBuilder, ignoreContext: Boolean) {
     for (st in this) {
         val context = st.context

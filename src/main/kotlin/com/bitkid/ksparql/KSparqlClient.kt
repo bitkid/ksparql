@@ -18,7 +18,6 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.query.BindingSet
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import org.eclipse.rdf4j.repository.sparql.query.QueryStringUtil
-import java.util.*
 
 data class ClientConfig(
     val databaseHost: String,
@@ -32,27 +31,23 @@ data class ClientConfig(
     val databaseBasePath: String = "$databaseHost:$databasePort/$databaseName",
     val updateUrl: String = "$databaseBasePath/$updateEndpoint",
     val queryUrl: String = "$databaseBasePath/$queryEndpoint",
-    val transactionBaseUrl: String = "$databaseBasePath/transaction"
+    val transactionBaseUrl: String = "$databaseBasePath/transaction",
+    val transactionType: TransactionType = TransactionType.STARDOG
 )
 
 open class KSparqlException(message: String) : RuntimeException(message)
 
 class HttpRequestException(message: String, val httpStatusCode: HttpStatusCode) : KSparqlException(message)
 
-class Transaction(val id: UUID, private val client: KSparqlClient) {
-    suspend fun add(statements: Iterable<Statement>) {
-        client.addInTransaction(statements, id)
-    }
-}
-
 class KSparqlClient(
-    private val config: ClientConfig
+    internal val config: ClientConfig
 ) : AutoCloseable {
     companion object {
         const val XML_ACCEPT_HEADER = "application/sparql-results+xml"
     }
 
     private val valueFactory = SimpleValueFactory.getInstance()
+
     private val client = HttpClient(Apache) {
         expectSuccess = false
         install(Auth) {
@@ -95,19 +90,7 @@ class KSparqlClient(
     }
 
     suspend fun begin(reasoning: Boolean = false): Transaction {
-        val response = client.post<HttpResponse>("${config.transactionBaseUrl}/begin?reasoning=$reasoning")
-        checkResponse(response)
-        return Transaction(UUID.fromString(response.receive()), this)
-    }
-
-    suspend fun commit(transaction: Transaction) {
-        val response = client.post<HttpResponse>("${config.transactionBaseUrl}/commit/${transaction.id}")
-        checkResponse(response)
-    }
-
-    suspend fun rollback(transaction: Transaction) {
-        val response = client.post<HttpResponse>("${config.transactionBaseUrl}/rollback/${transaction.id}")
-        checkResponse(response)
+        return config.transactionType.create(this, reasoning)
     }
 
     suspend fun transaction(
@@ -117,24 +100,19 @@ class KSparqlClient(
         val transaction = begin(reasoning)
         try {
             block(transaction)
-            commit(transaction)
+            transaction.commit()
         } catch (e: Exception) {
-            rollback(transaction)
+            transaction.rollback()
             throw e
         }
     }
 
-    internal suspend fun addInTransaction(
-        statements: Iterable<Statement>,
-        id: UUID
-    ) {
-        val insertBody = buildString {
-            statements.createDataBody(this, true)
-        }
-        val response = client.post<HttpResponse>("${config.databaseBasePath}/$id/add") {
-            body = insertBody
+    internal suspend fun postAndCheck(url: String, bodyContent: String = ""): String {
+        val response = client.post<HttpResponse>(url) {
+            body = bodyContent
         }
         checkResponse(response)
+        return response.receive()
     }
 
     internal suspend fun getBooleanResult(
