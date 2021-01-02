@@ -32,7 +32,7 @@ data class ClientConfig(
     val updateUrl: String = "$databaseBasePath/$updateEndpoint",
     val queryUrl: String = "$databaseBasePath/$queryEndpoint",
     val transactionBaseUrl: String = "$databaseBasePath/transaction",
-    val transactionType: TransactionType = TransactionType.STARDOG
+    val transactionType: TransactionType = TransactionType.LOCAL
 )
 
 open class KSparqlException(message: String) : RuntimeException(message)
@@ -81,7 +81,7 @@ class KSparqlClient(
     }
 
     suspend fun add(statements: Iterable<Statement>, vararg contexts: Resource) {
-        val insertString = statements.createInsertDataCommand(*contexts)
+        val insertString = statements.createModifyDataCommand(ModifyCommand.INSERT, *contexts)
         return getSparqlResult(insertString, config.updateUrl, "update") {}
     }
 
@@ -139,7 +139,7 @@ class KSparqlClient(
         return bindingSet
     }
 
-    private suspend fun <T> getSparqlResult(
+    internal suspend fun <T> getSparqlResult(
         query: String,
         endpoint: String,
         parameterName: String = "query",

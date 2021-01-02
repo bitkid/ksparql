@@ -2,6 +2,7 @@ package com.bitkid.ksparql.stardog
 
 import com.bitkid.ksparql.ClientConfig
 import com.bitkid.ksparql.KSparqlClient
+import com.bitkid.ksparql.TransactionType
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Disabled
@@ -19,7 +20,8 @@ class TransactionsTest {
             databasePort = 5820,
             databaseName = "test",
             user = "admin",
-            password = "admin"
+            password = "admin",
+            transactionType = TransactionType.STARDOG
         )
     )
 

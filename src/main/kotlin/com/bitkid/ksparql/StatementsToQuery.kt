@@ -4,33 +4,46 @@ import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.util.Literals
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLUtil
 
+enum class ModifyCommand {
+    DELETE, INSERT
+}
+
 /**
  * again basically copied from rdf4j and made it more kotlin style
  *
  * @see org.eclipse.rdf4j.repository.sparql.SPARQLConnection
  */
-fun Iterable<Statement>.createInsertDataCommand(vararg contexts: Resource): String {
+fun Iterable<Statement>.createModifyDataCommand(command: ModifyCommand, vararg contexts: Resource): String {
     return buildString {
-        append("INSERT DATA \n")
-        append("{ \n")
-        if (contexts.isNotEmpty()) {
-            for (context in contexts) {
-                val namedGraph = if (context is BNode) {
-                    // SPARQL does not allow blank nodes as named graph
-                    // identifiers, so we need to skolemize
-                    // the blank node id.
-                    "urn:nodeid:" + context.stringValue()
-                } else context.stringValue()
-
-                append("    GRAPH <$namedGraph> { \n")
-                createDataBody(this, true)
-                append(" } \n")
-            }
-        } else {
-            createDataBody(this, false)
-        }
-        append("}")
+        appendModifyDataCommand(this, command, *contexts)
     }
+}
+
+fun Iterable<Statement>.appendModifyDataCommand(
+    stringBuilder: StringBuilder,
+    command: ModifyCommand,
+    vararg contexts: Resource
+) {
+    stringBuilder.append(command)
+    stringBuilder.append(" DATA \n")
+    stringBuilder.append("{ \n")
+    if (contexts.isNotEmpty()) {
+        for (context in contexts) {
+            val namedGraph = if (context is BNode) {
+                // SPARQL does not allow blank nodes as named graph
+                // identifiers, so we need to skolemize
+                // the blank node id.
+                "urn:nodeid:" + context.stringValue()
+            } else context.stringValue()
+
+            stringBuilder.append("    GRAPH <$namedGraph> { \n")
+            createDataBody(stringBuilder, true)
+            stringBuilder.append(" } \n")
+        }
+    } else {
+        createDataBody(stringBuilder, false)
+    }
+    stringBuilder.append("}")
 }
 
 fun createClearString(contexts: Array<out Resource?>): String {

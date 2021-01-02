@@ -10,21 +10,26 @@ interface Transaction {
     suspend fun rollback()
 }
 
-class LocalTransaction(@Suppress("unused") private val client: KSparqlClient) : Transaction {
+class LocalTransaction(private val client: KSparqlClient) : Transaction {
+
+    private val data = StringBuilder()
+
     override suspend fun add(statements: Iterable<Statement>) {
-        TODO("Not yet implemented")
+        statements.appendModifyDataCommand(data, ModifyCommand.INSERT)
+        data.append("; ")
     }
 
     override suspend fun remove(statements: Iterable<Statement>) {
-        TODO("Not yet implemented")
+        statements.appendModifyDataCommand(data, ModifyCommand.DELETE)
+        data.append("; ")
     }
 
     override suspend fun commit() {
-        TODO("Not yet implemented")
+        client.getSparqlResult(data.toString(), client.config.updateUrl, "update") {}
     }
 
     override suspend fun rollback() {
-        TODO("Not yet implemented")
+        data.clear()
     }
 }
 
