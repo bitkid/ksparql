@@ -16,7 +16,6 @@ import strikt.api.expectThrows
 import strikt.assertions.hasSize
 import strikt.assertions.isEqualTo
 import strikt.assertions.isTrue
-import strikt.assertions.startsWith
 import java.io.ByteArrayOutputStream
 
 
@@ -92,23 +91,11 @@ class KSparqlClientTest {
     @Test
     fun `fails if the request fails in an undefined way`() {
         runBlocking {
-            val error = expectThrows<HttpException> {
+            val error = expectThrows<HttpRequestException> {
                 client.getQueryResult("", "http://localhost:${server.port}/test/error-no-json")
             }
             error.get { message }.isEqualTo("bla")
             error.get { httpStatusCode }.isEqualTo(HttpStatusCode.InternalServerError)
-        }
-    }
-
-    @Test
-    fun `fails if an error is returned`() {
-        runBlocking {
-            val error = expectThrows<QueryException> {
-                client.getQueryResult("", "http://localhost:${server.port}/test/error")
-            }
-            error.get { errorResponse.code }.isEqualTo("QE0PE2")
-            error.get { errorResponse.message }.startsWith("com.complexible.stardog")
-            error.get { httpStatusCode }.isEqualTo(HttpStatusCode.BadRequest)
         }
     }
 }

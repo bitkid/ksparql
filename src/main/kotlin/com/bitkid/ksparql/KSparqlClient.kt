@@ -1,7 +1,5 @@
 package com.bitkid.ksparql
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.apache.*
@@ -37,6 +35,10 @@ data class ClientConfig(
     val transactionBaseUrl: String = "$databaseBasePath/transaction"
 )
 
+open class KSparqlException(message: String) : RuntimeException(message)
+
+class HttpRequestException(message: String, val httpStatusCode: HttpStatusCode) : KSparqlException(message)
+
 class Transaction(val id: UUID, private val client: KSparqlClient) {
     suspend fun add(statements: Iterable<Statement>) {
         client.addInTransaction(statements, id)
@@ -50,7 +52,6 @@ class KSparqlClient(
         const val XML_ACCEPT_HEADER = "application/sparql-results+xml"
     }
 
-    private val jackson = jacksonObjectMapper()
     private val valueFactory = SimpleValueFactory.getInstance()
     private val client = HttpClient(Apache) {
         expectSuccess = false
@@ -187,15 +188,10 @@ class KSparqlClient(
     ): Exception {
         val status = response.call.response.status
         val content = response.call.response.readText()
-        val error = try {
-            jackson.readValue<ErrorResponse>(content)
-        } catch (e: Exception) {
-            return if (content.isBlank())
-                HttpException("Server returned status $status", status)
-            else
-                HttpException(content, status)
-        }
-        return QueryException(error, status)
+        return if (content.isBlank())
+            HttpRequestException("Server returned status $status", status)
+        else
+            HttpRequestException(content, status)
     }
 }
 

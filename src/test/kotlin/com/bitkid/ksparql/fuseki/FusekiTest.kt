@@ -1,10 +1,9 @@
 package com.bitkid.ksparql.fuseki
 
 import com.bitkid.ksparql.ClientConfig
-import com.bitkid.ksparql.HttpException
+import com.bitkid.ksparql.HttpRequestException
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.iri
-import com.bitkid.ksparql.test.DataFetcher
 import com.bitkid.ksparql.test.TestUtils.dateMillis
 import com.bitkid.ksparql.test.TestUtils.fetchAllQuery
 import com.bitkid.ksparql.test.TestUtils.testEntity
@@ -17,7 +16,6 @@ import org.eclipse.rdf4j.model.util.ModelBuilder
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
@@ -108,87 +106,53 @@ class FusekiTest {
     }
 
     @Test
-    fun `results are equal`() {
-        val res1 = repo.connection.use {
-            val query = it.prepareTupleQuery(fetchAllQuery)
-            query.evaluate().toList()
-        }
-        val res2 = runBlocking {
-            client.query(fetchAllQuery).map { it.bindingSet }.toList()
-        }
-        expectThat(res1).isEqualTo(res2)
-    }
-
-    @Test
-    fun `can add`() {
+    fun `can add statements`() = runBlocking<Unit> {
         val model = ModelBuilder().subject(testEntity)
             .add(iri("http://propi"), "bla")
             .add(iri("http://propi1"), 5)
             .build()
 
-        runBlocking {
-            client.add(model)
-            expectThat(client.query(fetchAllQuery).toList()).hasSize(12)
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(10)
+        client.add(model)
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(12)
+    }
+
+    @Test
+    fun `can run query`() = runBlocking<Unit> {
+        val result = client.query(fetchAllQuery) {
+            addBinding("b", it.createIRI("http://hasEntityRelation"))
+        }.toList()
+        expectThat(result).hasSize(1)
+        expectThat(result.single().bindingNames).containsExactly("a", "b", "c")
+    }
+
+    @Test
+    fun `can run ask query`() = runBlocking<Unit> {
+        val result = client.ask("""ASK {?a ?b ?c}""") {
+            addBinding("b", it.createIRI("http://hasEntityRelation"))
+        }
+        expectThat(result).isTrue()
+
+        val result1 = client.ask("""ASK {?a ?b ?c}""") {
+            addBinding("c", it.createLiteral("not existing"))
+        }
+        expectThat(result1).isFalse()
+    }
+
+    @Test
+    fun `can handle query error`() = runBlocking<Unit> {
+        expectThrows<HttpRequestException> {
+            client.getQueryResult("slelect bla *")
         }
     }
 
     @Test
-    fun `can run query against fuseki with ksparql`() {
-        runBlocking {
-            val result = client.query(fetchAllQuery) {
-                addBinding("b", it.createIRI("http://hasEntityRelation"))
-            }.toList()
-            expectThat(result).hasSize(1)
-            expectThat(result.single().bindingNames).containsExactly("a", "b", "c")
+    fun `rdf4j and ksparql results are equal`() = runBlocking<Unit> {
+        val res1 = repo.connection.use {
+            val query = it.prepareTupleQuery(fetchAllQuery)
+            query.evaluate().toList()
         }
-    }
-
-    @Test
-    fun `can run ask query against fuseki with ksparql`() {
-        runBlocking {
-            val result = client.ask("""ASK {?a ?b ?c}""") {
-                addBinding("b", it.createIRI("http://hasEntityRelation"))
-            }
-            expectThat(result).isTrue()
-            val result1 = client.ask("""ASK {?a ?b ?c}""") {
-                addBinding("c", it.createLiteral("not existing"))
-            }
-            expectThat(result1).isFalse()
-        }
-    }
-
-    @Test
-    fun `can handle query error`() {
-        runBlocking {
-            expectThrows<HttpException> {
-                client.getQueryResult("slelect bla *")
-            }
-        }
-    }
-
-    @Disabled
-    @Test
-    fun `print error json`() {
-        runBlocking {
-            println(
-                DataFetcher().getQueryResponseAsString(
-                    "http://localhost:${server.port}/$databaseName/query",
-                    "slelect * from"
-                )
-            )
-        }
-    }
-
-    @Disabled
-    @Test
-    fun `print xml`() {
-        runBlocking {
-            println(
-                DataFetcher().getQueryResponseAsString(
-                    "http://localhost:${server.port}/$databaseName/query",
-                    fetchAllQuery
-                )
-            )
-        }
+        val res2 = client.query(fetchAllQuery).map { it.bindingSet }.toList()
+        expectThat(res1).isEqualTo(res2)
     }
 }

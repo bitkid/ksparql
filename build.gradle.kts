@@ -34,7 +34,6 @@ dependencies {
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
     implementation("io.ktor:ktor-client-auth-jvm:$ktorVersion")
     implementation("com.fasterxml:aalto-xml:1.2.2")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
     implementation("org.eclipse.rdf4j:rdf4j-repository-sparql:$rdf4jVersion") {
         exclude("org.eclipse.rdf4j", "rdf4j-http-client")
