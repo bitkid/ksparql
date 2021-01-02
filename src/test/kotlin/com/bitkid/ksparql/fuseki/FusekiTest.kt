@@ -26,8 +26,10 @@ import java.util.*
 class FusekiTest {
 
     private val databaseName = "test"
-    private val server =
-        FusekiServer.create().setPort(0).add("/$databaseName", DatasetFactory.createTxnMem()).build().apply {
+    private val server = FusekiServer.create()
+        .setPort(0)
+        .add("/$databaseName", DatasetFactory.createTxnMem()).build()
+        .apply {
             start()
         }
 
@@ -35,17 +37,12 @@ class FusekiTest {
         databaseHost = "http://localhost",
         databasePort = server.port,
         databaseName = databaseName,
-        user = "admin",
-        password = "admin"
     )
 
     private val repo = SPARQLRepository(
         localFusekiConfig.queryUrl,
         localFusekiConfig.updateUrl
-    ).apply {
-        setUsernameAndPassword(localFusekiConfig.user, localFusekiConfig.password)
-        init()
-    }
+    )
 
     private val client = KSparqlClient(localFusekiConfig)
 
