@@ -3,11 +3,11 @@ package com.bitkid.ksparql.stardog
 import com.bitkid.ksparql.ClientConfig
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.iri
+import com.bitkid.ksparql.model
 import com.bitkid.ksparql.test.TestUtils.fetchAllQuery
 import com.bitkid.ksparql.test.TestUtils.testEntity
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
-import org.eclipse.rdf4j.model.util.ModelBuilder
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -32,7 +32,7 @@ class TransactionsTest {
         )
     )
 
-    private val model = ModelBuilder().subject(testEntity)
+    private val model = testEntity.model()
         .add(iri("http://propi"), "bla")
         .add(iri("http://propi1"), 5)
         .build()
@@ -46,7 +46,7 @@ class TransactionsTest {
     }
 
     @Test
-    fun `can do transaction with the client`() = runBlocking<Unit> {
+    fun `can add in transaction`() = runBlocking<Unit> {
         val tr = client.begin()
         tr.add(model)
         tr.rollback()
@@ -60,7 +60,21 @@ class TransactionsTest {
     }
 
     @Test
-    fun `can do closure transaction`() = runBlocking<Unit> {
+    fun `can remove in transaction`() = runBlocking<Unit> {
+        val ta = client.begin()
+        ta.add(model)
+        ta.commit()
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(2)
+
+        val tr = client.begin()
+        tr.remove(testEntity.model().add(iri("http://propi"), "bla").build())
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(2)
+        tr.commit()
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(1)
+    }
+
+    @Test
+    fun `can add with transaction closure`() = runBlocking<Unit> {
         expectThrows<RuntimeException> {
             client.transaction {
                 add(model)
@@ -73,5 +87,17 @@ class TransactionsTest {
             add(model)
         }
         expectThat(client.query(fetchAllQuery).toList()).hasSize(2)
+    }
+
+    @Test
+    fun `can remove with transaction closure`() = runBlocking<Unit> {
+        client.transaction {
+            add(model)
+        }
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(2)
+        client.transaction {
+            remove(testEntity.model().add(iri("http://propi"), "bla").build())
+        }
+        expectThat(client.query(fetchAllQuery).toList()).hasSize(1)
     }
 }
