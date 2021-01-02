@@ -25,8 +25,8 @@ fun Iterable<Statement>.appendModifyDataCommand(
     vararg contexts: Resource
 ) {
     stringBuilder.append(command)
-    stringBuilder.append(" DATA \n")
-    stringBuilder.append("{ \n")
+    stringBuilder.appendLine(" DATA ")
+    stringBuilder.appendLine("{ ")
     if (contexts.isNotEmpty()) {
         for (context in contexts) {
             val namedGraph = if (context is BNode) {
@@ -36,9 +36,9 @@ fun Iterable<Statement>.appendModifyDataCommand(
                 "urn:nodeid:" + context.stringValue()
             } else context.stringValue()
 
-            stringBuilder.append("    GRAPH <$namedGraph> { \n")
+            stringBuilder.appendLine("    GRAPH <$namedGraph> { ")
             createDataBody(stringBuilder, true)
-            stringBuilder.append(" } \n")
+            stringBuilder.appendLine(" } ")
         }
     } else {
         createDataBody(stringBuilder, false)
@@ -85,7 +85,7 @@ fun Iterable<Statement>.createDataBody(qb: StringBuilder, ignoreContext: Boolean
                     // the blank node id.
                     "urn:nodeid:" + context.stringValue()
                 } else context.stringValue()
-                qb.append("    GRAPH <$namedGraph> { \n")
+                qb.appendLine("    GRAPH <$namedGraph> { ")
             }
         }
         if (st.subject is BNode) {
@@ -115,9 +115,9 @@ fun Iterable<Statement>.createDataBody(qb: StringBuilder, ignoreContext: Boolean
                 qb.append("<" + st.getObject().stringValue() + "> ")
             }
         }
-        qb.append(". \n")
+        qb.appendLine(". ")
         if (!ignoreContext && context != null) {
-            qb.append("    }\n")
+            qb.appendLine("    }")
         }
     }
 }

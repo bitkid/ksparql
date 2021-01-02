@@ -1,9 +1,8 @@
-package com.bitkid.ksparql.stardog
+package com.bitkid.ksparql.test
 
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.iri
 import com.bitkid.ksparql.model
-import com.bitkid.ksparql.test.TestUtils
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import strikt.api.expectThat

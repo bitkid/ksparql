@@ -1,6 +1,6 @@
 package com.bitkid.ksparql
 
-import com.bitkid.ksparql.stardog.TransactionCalls
+import com.bitkid.ksparql.test.TransactionCalls
 import org.apache.jena.fuseki.embedded.FusekiServer
 import org.apache.jena.query.DatasetFactory
 import org.junit.jupiter.api.AfterEach

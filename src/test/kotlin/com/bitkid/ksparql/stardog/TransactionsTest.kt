@@ -3,6 +3,7 @@ package com.bitkid.ksparql.stardog
 import com.bitkid.ksparql.ClientConfig
 import com.bitkid.ksparql.KSparqlClient
 import com.bitkid.ksparql.TransactionType
+import com.bitkid.ksparql.test.TransactionCalls
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Disabled
