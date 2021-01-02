@@ -10,7 +10,7 @@ interface Transaction {
     suspend fun rollback()
 }
 
-class LocalTransaction(private val client: KSparqlClient) : Transaction {
+class LocalTransaction(@Suppress("unused") private val client: KSparqlClient) : Transaction {
     override suspend fun add(statements: Iterable<Statement>) {
         TODO("Not yet implemented")
     }
@@ -28,7 +28,7 @@ class LocalTransaction(private val client: KSparqlClient) : Transaction {
     }
 }
 
-class StardogTransaction(val id: UUID, private val client: KSparqlClient) : Transaction {
+class StardogTransaction(private val id: UUID, private val client: KSparqlClient) : Transaction {
     override suspend fun add(statements: Iterable<Statement>) {
         client.postAndCheck("${client.config.databaseBasePath}/$id/add", statements.asString())
     }
