@@ -2,7 +2,7 @@ package com.bitkid.ksparql
 
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.util.Literals
-import org.eclipse.rdf4j.query.parser.sparql.SPARQLUtil
+import org.eclipse.rdf4j.query.parser.sparql.SPARQLQueries
 
 enum class ModifyCommand {
     DELETE, INSERT
@@ -98,7 +98,7 @@ fun Iterable<Statement>.createDataBody(qb: StringBuilder, ignoreContext: Boolean
             st.getObject() is Literal -> {
                 val lit = st.getObject() as Literal
                 qb.append("\"")
-                qb.append(SPARQLUtil.encodeString(lit.label))
+                qb.append(SPARQLQueries.escape(lit.label))
                 qb.append("\"")
                 if (Literals.isLanguageLiteral(lit)) {
                     qb.append("@")
