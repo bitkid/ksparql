@@ -3,11 +3,13 @@ package com.bitkid.ksparql
 import com.fasterxml.aalto.AsyncByteArrayFeeder
 import com.fasterxml.aalto.AsyncXMLStreamReader
 import com.fasterxml.aalto.stax.InputFactoryImpl
-import io.ktor.util.cio.*
 import io.ktor.utils.io.*
-import kotlinx.collections.immutable.*
-import kotlinx.coroutines.flow.*
-import org.eclipse.rdf4j.model.*
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.flow
+import org.eclipse.rdf4j.model.Value
+import org.eclipse.rdf4j.model.ValueFactory
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import javax.xml.stream.XMLStreamConstants
